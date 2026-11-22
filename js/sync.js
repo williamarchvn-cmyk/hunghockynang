@@ -8,13 +8,18 @@
       const base = window.HHKN_CONFIG || {}; const ov = Store.local.cfg || {};
       return { supabaseUrl: ov.supabaseUrl || base.supabaseUrl || '', supabaseAnonKey: ov.supabaseAnonKey || base.supabaseAnonKey || '', vapidPublicKey: ov.vapidPublicKey || base.vapidPublicKey || '' };
     },
-    configured() { const c = Sync.cfg(); return !!(c.supabaseUrl && c.supabaseAnonKey && window.supabase); },
+    configured() { const c = Sync.cfg(); return !!(c.supabaseUrl && c.supabaseAnonKey); },
+    lib() {
+      if (window.supabase) return Promise.resolve(window.supabase);
+      return Sync._lib || (Sync._lib = new Promise((ok, fail) => { const sc = document.createElement('script'); sc.src = 'vendor/supabase.js'; sc.async = true; sc.onload = () => ok(window.supabase); sc.onerror = () => { Sync._lib = null; fail(new Error('Không tải được thư viện đồng bộ')); }; document.head.appendChild(sc); }));
+    },
     setStatus(s, err = '') { Sync.status = s; Sync.lastError = err; document.querySelectorAll('[data-sync-dot]').forEach(el => { el.className = 'sync-dot ' + ({ ok: 'on', err: 'err', busy: 'busy' }[s] || ''); }); document.querySelectorAll('[data-sync-text]').forEach(el => el.textContent = Sync.label()); },
     label() { return ({ off: 'Chưa đồng bộ (chỉ lưu trên máy)', ok: 'Đã đồng bộ', busy: 'Đang đồng bộ…', err: 'Lỗi đồng bộ: ' + Sync.lastError, offline: 'Mất mạng — sẽ đồng bộ lại sau' }[Sync.status] || ''); },
 
     async init() {
       if (!Sync.configured()) { Sync.setStatus('off'); return; }
       const c = Sync.cfg();
+      try { await Sync.lib(); } catch (e) { Sync.setStatus('err', e.message); return; }
       Sync.sb = window.supabase.createClient(c.supabaseUrl, c.supabaseAnonKey, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'hhkn-auth' } });
       const { data } = await Sync.sb.auth.getSession();
       Sync.user = data.session?.user || null;

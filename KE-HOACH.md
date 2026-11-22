@@ -1,6 +1,6 @@
 # Kế hoạch: PWA "Hùng học kỹ năng"
 
-> Phiên bản kế hoạch: 1.0 · Ngày 22/11/2026
+> Phiên bản kế hoạch: 1.1 · Ngày 22/11/2026 (v1.1: bỏ toàn bộ AI, tối ưu tốc độ và giao diện — xem mục 9)
 > Mục tiêu: một app cá nhân giúp học **song song nhiều kỹ năng** (Lập kế hoạch, Lập trình, Thể thao, và bất kỳ kỹ năng nào thêm sau), lấy **luyện tập có chủ đích** làm trục chính, kết hợp các phương pháp học có bằng chứng tốt để đạt mức thuần thục nhanh nhất với khoảng **2 giờ/ngày**.
 
 ---
@@ -13,7 +13,7 @@
 | Kỹ năng | Nhiều kỹ năng song song. Mẫu có sẵn: Lập kế hoạch, Lập trình, Thể thao |
 | Thời lượng | 120 phút/ngày (chỉnh được), app tự chia cho từng kỹ năng |
 | Dữ liệu | Đồng bộ tự động laptop ↔ điện thoại qua **Supabase** (gói miễn phí), có đăng nhập |
-| AI | **Gemini API** (key miễn phí): chia kỹ năng con, gợi ý bài tập, tạo thẻ tự kiểm tra, nhận xét tuần |
+| AI | **Không dùng** (bỏ từ v1.1). Gợi ý và nhận xét đều tính từ dữ liệu của chính bạn |
 | Nhắc tập | **PWA** + Web Push thật (nhắc cả khi đã đóng app) + file lịch .ics để dự phòng |
 | Thiết bị | Samsung S23 Ultra (màn dọc ~384–412 px CSS) · ThinkPad P1 Gen 1 (15,6", ~1280–1536 px CSS) |
 | Giao diện | Nền sáng, màu phẳng, **không gradient**, gọn và rõ |
@@ -54,7 +54,7 @@
 
 ### 3.2 Kỹ năng
 - Danh sách thẻ kỹ năng (màu riêng cho từng kỹ năng), mức trung bình, số giờ đã tập, phút mục tiêu mỗi ngày.
-- Tạo kỹ năng theo 3 cách: **từ mẫu** (Lập kế hoạch / Lập trình / Thể thao), **bằng AI**, hoặc **tạo trống**.
+- Tạo kỹ năng theo 3 cách: **từ mẫu** (Lập kế hoạch / Lập trình / Thể thao), hoặc **tự tạo** (gõ sẵn danh sách kỹ năng con, mỗi dòng một kỹ năng).
 - Trang chi tiết kỹ năng:
   - Định nghĩa "thuần thục" đo được và ngày mục tiêu.
   - Các kỹ năng con: mức 0–5, mô tả từng mức, bài tập gợi ý, mẫu chuẩn, lịch ôn.
@@ -63,7 +63,7 @@
   - Lịch sử buổi tập.
 
 ### 3.3 Buổi tập (chế độ tập trung)
-- Chọn kỹ năng và kỹ năng con, ghi **một mục tiêu cụ thể** (AI có thể gợi ý 3 bài tập đúng mức).
+- Chọn kỹ năng và kỹ năng con, ghi **một mục tiêu cụ thể** (app gợi ý từ: điều lần trước tự dặn, lỗi lặp lại, kết quả buổi trước để tăng/giảm độ khó, bài tập có sẵn).
 - Đồng hồ đếm ngược, giữ màn hình luôn sáng (Wake Lock), vẫn tính đúng giờ khi chuyển app.
 - Nút lớn **Đạt / Trượt**, tỉ lệ đạt hiển thị trực tiếp với 3 vùng: Quá khó / Vừa sức / Quá dễ.
 - Ghi nhanh lỗi trong lúc tập.
@@ -71,19 +71,18 @@
 
 ### 3.4 Thẻ tự kiểm tra
 - Lật thẻ, chấm 4 mức: Quên / Khó / Được / Dễ, lịch ôn tính theo SM-2.
-- Lọc theo kỹ năng. Tạo thẻ thủ công hoặc nhờ AI tạo từ ghi chú dán vào.
+- Lọc theo kỹ năng. Tạo thẻ thủ công hoặc **Nhập nhiều**: dán mỗi dòng `câu hỏi | đáp án` (hoặc 2 cột từ Excel/Google Sheets).
 
 ### 3.5 Thống kê và rà soát tuần
 - Lịch nhiệt 16 tuần gần nhất.
 - Số phút mỗi tuần theo kỹ năng, tỉ lệ đạt trung bình, mức tập trung trung bình.
 - Đường tiến bộ của mức kỹ năng con và kết quả test mốc.
-- Rà soát tuần: điều gì hiệu quả, điều gì chưa, tuần tới chỉnh gì. Có nút AI nhận xét dựa trên số liệu.
+- Rà soát tuần: điều gì hiệu quả, điều gì chưa, tuần tới chỉnh gì. Mục **Nhận xét tuần này** tự động theo quy tắc: tiến độ so mục tiêu, vùng tỉ lệ đạt, tỉ lệ thời gian có chủ đích, mức tập trung, kỹ năng bị bỏ quên, kỹ năng con quan trọng lâu chưa tập, lỗi lặp, thẻ và test mốc đến hạn.
 
 ### 3.6 Cài đặt
 - Tài khoản Supabase (email + mật khẩu), trạng thái đồng bộ, nút đồng bộ ngay.
 - Mục tiêu phút mỗi ngày, ngày nghỉ trong tuần.
 - Nhắc tập: bật thông báo, giờ nhắc (mặc định 06:00 và 20:00), nhắc cuối ngày nếu chưa đủ phút. Tải file lịch .ics làm dự phòng.
-- Gemini: API key (chỉ lưu trên từng máy), chọn model (có nút tải danh sách model).
 - Xuất/nhập dữ liệu JSON để sao lưu.
 
 ---
@@ -109,7 +108,8 @@
 hung-hoc-ky-nang/
 ├─ index.html              # khung app
 ├─ styles.css              # giao diện
-├─ app.js                  # toàn bộ logic (vanilla JS, không cần build)
+├─ js/                     # core, sync, charts, views, main (vanilla JS, không cần build)
+├─ fonts/  vendor/         # phông chữ và thư viện Supabase lưu sẵn (offline)
 ├─ config.js               # Supabase URL/anon key, VAPID public key (điền 1 lần)
 ├─ sw.js                   # service worker: cache offline, nhận push
 ├─ manifest.webmanifest    # cài PWA
@@ -133,8 +133,7 @@ hung-hoc-ky-nang/
   - Trình duyệt đăng ký nhận push; thông tin đăng ký lưu ở bảng `push_subscriptions`.
   - `pg_cron` gọi Edge Function `send-reminders` mỗi 5 phút. Hàm này đọc giờ nhắc trong `settings` (múi giờ Asia/Ho_Chi_Minh), tính số phút đã tập hôm nay và số mục đến hạn ôn, rồi gửi thông báo qua thư viện `@pushforge/builder` (chạy trên Web Crypto, hợp với Deno).
   - Bảng `reminder_log` chống gửi trùng.
-- **AI (Gemini):** gọi thẳng REST `generateContent` từ trình duyệt và yêu cầu trả về JSON. Model mặc định `gemini-3.8-flash`, đổi được trong Cài đặt. Key chỉ lưu trên máy, không đồng bộ lên server.
-- **Thư viện ngoài:** chỉ dùng `@supabase/supabase-js` v2 (qua CDN). Biểu đồ vẽ bằng SVG tự viết nên app nhẹ.
+- **Thư viện ngoài:** chỉ `@supabase/supabase-js` v2, lưu sẵn trong `vendor/` và chỉ tải khi cần đồng bộ. Phông Be Vietnam Pro lưu sẵn trong `fonts/`. App không gọi CDN nào, chạy được offline hoàn toàn. Biểu đồ vẽ bằng SVG tự viết.
 
 ---
 
@@ -146,7 +145,7 @@ hung-hoc-ky-nang/
 **Lập trình:** Đọc hiểu code · Cấu trúc dữ liệu & thuật toán · Gỡ lỗi (debug) · Viết test · Thiết kế & kiến trúc · Công cụ (Git, terminal) · Làm việc cùng AI (prompt, review code AI viết).
 - Test mốc: số bài kata giải được trong 30 phút · thời gian làm xong một tính năng chuẩn.
 
-**Thể thao (khung chung, dùng AI để làm riêng cho môn cụ thể):** Kỹ thuật động tác · Sức bền · Sức mạnh · Linh hoạt & phục hồi · Chiến thuật · Tâm lý thi đấu.
+**Thể thao (khung chung; với môn cụ thể hãy tự tạo kỹ năng riêng):** Kỹ thuật động tác · Sức bền · Sức mạnh · Linh hoạt & phục hồi · Chiến thuật · Tâm lý thi đấu.
 - Test mốc: tùy môn, ví dụ thời gian chạy 5 km hoặc số lần thực hiện đúng kỹ thuật trên 20 lần.
 
 ---
@@ -160,7 +159,7 @@ hung-hoc-ky-nang/
 5. Bộ lập kế hoạch hôm nay và lịch ôn giãn cách.
 6. Thẻ tự kiểm tra (SM-2).
 7. Thống kê, lịch nhiệt, biểu đồ, rà soát tuần.
-8. Tích hợp Gemini (4 chức năng).
+8. ~~Tích hợp Gemini~~ (bỏ ở v1.1).
 9. Đồng bộ Supabase + realtime.
 10. Web Push: đăng ký trên trình duyệt, schema SQL, Edge Function.
 11. Kiểm tra trên khung màn hình S23 Ultra và ThinkPad P1, sửa lỗi, viết HUONG-DAN.md.
@@ -169,3 +168,24 @@ hung-hoc-ky-nang/
 - Ghi âm hoặc quay video buổi tập để tự xem lại.
 - Kết nối dữ liệu từ đồng hồ thể thao hoặc Google Fit.
 - Chế độ tối.
+
+---
+
+## 9. Thay đổi ở v1.1 (22/11/2026)
+
+**Bỏ AI hoàn toàn:** xóa `js/ai.js`, mục Cài đặt → AI, các nút AI. Key Gemini cũ còn lưu trên máy sẽ tự bị xóa khi mở bản mới. Thay thế bằng:
+- Gợi ý mục tiêu buổi tập từ dữ liệu: lần trước dặn, lỗi lặp ≥ 2 lần, kết quả buổi trước (quá dễ → "Khó hơn", quá khó → "Chia nhỏ hơn"), bài tập có sẵn.
+- Tự tạo kỹ năng kèm danh sách kỹ năng con trong một bước.
+- Nhập nhiều thẻ một lúc (`câu hỏi | đáp án`, Tab, hoặc dán 2 cột).
+- Nhận xét tuần tự động theo quy tắc luyện tập có chủ đích (tối đa 6 dòng, ưu tiên vấn đề nặng).
+
+**Tốc độ** (đo trên dữ liệu 1 năm, ~640 bản ghi):
+- Chỉ mục dữ liệu theo loại + nhớ đệm truy vấn (buổi tập, phút theo ngày, kỹ năng con): màn Hôm nay 7,6 → 4,2 ms.
+- Gộp ghi localStorage (250 ms) thay vì ghi mỗi thay đổi: 20 lần lưu 92 → 1,5 ms; ghi ngay khi ẩn app/rời trang.
+- Phông chữ và thư viện Supabase lưu sẵn, script `defer`, Supabase tải sau khi giao diện đã hiện. Không còn request tới CDN.
+
+**Giao diện:**
+- Sửa lỗi tràn ngang trên điện thoại khi câu hỏi thẻ dài (làm lệch hộp thoại).
+- Hôm nay: Kế hoạch đưa lên ngay dưới tiến độ; nút Bắt đầu gọn trên điện thoại.
+- Thông báo nổi lên đầu màn hình khi đang mở hộp thoại để không che nút.
+- Ô giờ nhắc đủ rộng, thẻ Cài đặt không bị kéo giãn, hiệu ứng nhấn nút.

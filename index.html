@@ -10,9 +10,8 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/bvp-vietnamese-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/bvp-latin-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -31,13 +30,11 @@
 <div id="sheet-root"></div>
 <div class="toast-wrap" id="toast-wrap" aria-live="polite"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="config.js"></script>
-<script src="js/core.js"></script>
-<script src="js/ai.js"></script>
-<script src="js/sync.js"></script>
-<script src="js/charts.js"></script>
-<script src="js/views.js"></script>
-<script src="js/main.js"></script>
+<script defer src="config.js"></script>
+<script defer src="js/core.js"></script>
+<script defer src="js/sync.js"></script>
+<script defer src="js/charts.js"></script>
+<script defer src="js/views.js"></script>
+<script defer src="js/main.js"></script>
 </body>
 </html>

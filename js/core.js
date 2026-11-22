@@ -72,28 +72,39 @@ const LS_DB = 'hhkn.db.v1', LS_META = 'hhkn.meta.v1', LS_LOCAL = 'hhkn.local.v1'
 const Store = H.Store = {
   recs: {},          // id -> {id, kind, data, updated_at, deleted}
   meta: { dirty: {}, lastPull: null, syncedUser: null },
-  local: {},         // chỉ trên máy: geminiKey, model, activeSession, cfg override...
+  local: {},         // chỉ trên máy: buổi tập đang chạy, cấu hình kết nối riêng
   listeners: new Set(),
+  ver: 0, _cache: {}, _ptimer: null,
+  bump() { this.ver++; this._cache = {}; },
+  memo(key, fn) { const c = this._cache; return key in c ? c[key] : (c[key] = fn()); },
   load() {
     try { this.recs = JSON.parse(localStorage.getItem(LS_DB) || '{}'); } catch { this.recs = {}; }
     try { this.meta = Object.assign({ dirty: {}, lastPull: null, syncedUser: null }, JSON.parse(localStorage.getItem(LS_META) || '{}')); } catch { }
     try { this.local = JSON.parse(localStorage.getItem(LS_LOCAL) || '{}'); } catch { this.local = {}; }
+    if ('geminiKey' in this.local || 'geminiModel' in this.local) { delete this.local.geminiKey; delete this.local.geminiModel; this.saveLocal(); }
+    this.bump();
   },
   saveSoon: null,
-  persist() {
-    localStorage.setItem(LS_DB, JSON.stringify(this.recs));
-    localStorage.setItem(LS_META, JSON.stringify(this.meta));
+  // ghi gộp: nhiều thay đổi liên tiếp chỉ ghi localStorage 1 lần
+  persist() { clearTimeout(this._ptimer); this._ptimer = setTimeout(() => this.flush(), 250); },
+  flush() {
+    clearTimeout(this._ptimer); this._ptimer = null;
+    try { localStorage.setItem(LS_DB, JSON.stringify(this.recs)); localStorage.setItem(LS_META, JSON.stringify(this.meta)); }
+    catch (e) { console.error(e); H.toast && H.toast('Bộ nhớ trình duyệt đầy. Hãy Xuất JSON để sao lưu.'); }
   },
   saveLocal() { localStorage.setItem(LS_LOCAL, JSON.stringify(this.local)); },
   emit(src) { this.listeners.forEach(f => { try { f(src); } catch (e) { console.error(e); } }); },
-  all(kind) { return Object.values(this.recs).filter(r => r.kind === kind && !r.deleted).map(r => r.data); },
+  all(kind) {
+    const idx = this.memo('#idx', () => { const m = {}; for (const r of Object.values(this.recs)) { if (r.deleted) continue; (m[r.kind] || (m[r.kind] = [])).push(r.data); } return m; });
+    return (idx[kind] || []).slice();
+  },
   get(id) { const r = this.recs[id]; return r && !r.deleted ? r.data : null; },
   put(kind, data, { silent } = {}) {
     if (!data.id) data.id = H.uid();
     const now = new Date().toISOString();
     this.recs[data.id] = { id: data.id, kind, data, updated_at: now, deleted: false };
     this.meta.dirty[data.id] = now;
-    this.persist();
+    this.bump(); this.persist();
     if (!silent) this.emit('local');
     H.Sync && H.Sync.schedule();
     return data;
@@ -103,7 +114,7 @@ const Store = H.Store = {
     const now = new Date().toISOString();
     r.deleted = true; r.updated_at = now;
     this.meta.dirty[id] = now;
-    this.persist(); this.emit('local');
+    this.bump(); this.persist(); this.emit('local');
     H.Sync && H.Sync.schedule();
   },
   // nhận bản ghi từ server (last-write-wins)
@@ -113,6 +124,7 @@ const Store = H.Store = {
     if (cur && this.meta.dirty[row.id] && this.meta.dirty[row.id] > row.updated_at) return false;
     this.recs[row.id] = { id: row.id, kind: row.kind, data: row.data, updated_at: row.updated_at, deleted: !!row.deleted };
     if (this.meta.dirty[row.id] && this.meta.dirty[row.id] <= row.updated_at) delete this.meta.dirty[row.id];
+    this.bump();
     return true;
   }
 };
@@ -208,12 +220,12 @@ H.createSkillFromSpec = (spec) => {
 
 /* ---------- Truy vấn ---------- */
 H.skills = () => Store.all('skill').filter(s => !s.archived).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-H.subsOf = sid => Store.all('subskill').filter(s => s.skillId === sid).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-H.sessions = () => Store.all('session').sort((a, b) => (b.startedAt || '').localeCompare(a.startedAt || ''));
-H.sessionsOfSkill = sid => H.sessions().filter(s => s.skillId === sid);
-H.sessionsOfSub = id => H.sessions().filter(s => s.subId === id);
-H.minutesOn = day => H.sum(H.sessions().filter(s => s.day === day).map(s => s.minutes));
-H.minutesByDay = () => { const m = {}; H.sessions().forEach(s => { m[s.day] = (m[s.day] || 0) + (s.minutes || 0); }); return m; };
+H.subsOf = sid => Store.memo('sub:' + sid, () => Store.all('subskill').filter(s => s.skillId === sid).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
+H.sessions = () => Store.memo('sessions', () => Store.all('session').sort((a, b) => (b.startedAt || '').localeCompare(a.startedAt || '')));
+H.sessionsOfSkill = sid => Store.memo('ss:' + sid, () => H.sessions().filter(s => s.skillId === sid));
+H.sessionsOfSub = id => Store.memo('su:' + id, () => H.sessions().filter(s => s.subId === id));
+H.minutesOn = day => H.minutesByDay()[day] || 0;
+H.minutesByDay = () => Store.memo('byDay', () => { const m = {}; H.sessions().forEach(s => { m[s.day] = (m[s.day] || 0) + (s.minutes || 0); }); return m; });
 H.streak = () => {
   const m = H.minutesByDay(); const rest = new Set(H.settings().restDays || []);
   let d = H.today(), n = 0;
@@ -355,6 +367,7 @@ H.toast = (msg, action) => {
 };
 H.openSheet = (html, { onMount, wide } = {}) => {
   const root = document.getElementById('sheet-root');
+  document.body.classList.add('sheet-open');
   root.innerHTML = `<div class="sheet-bg" data-sheet-bg><div class="sheet" role="dialog" aria-modal="true" ${wide ? 'style="max-width:760px"' : ''}><div class="grab"></div>${html}</div></div>`;
   const bg = root.firstElementChild;
   bg.addEventListener('click', e => { if (e.target === bg) H.closeSheet(); });
@@ -362,7 +375,7 @@ H.openSheet = (html, { onMount, wide } = {}) => {
   onMount && onMount(bg.querySelector('.sheet'));
   return bg.querySelector('.sheet');
 };
-H.closeSheet = () => { document.getElementById('sheet-root').innerHTML = ''; };
+H.closeSheet = () => { document.getElementById('sheet-root').innerHTML = ''; document.body.classList.remove('sheet-open'); };
 H.sheetOpen = () => !!document.querySelector('#sheet-root .sheet');
 H.confirm = (msg, okLabel = 'Đồng ý', danger) => new Promise(res => {
   const sh = H.openSheet(`<h2 style="margin-bottom:8px">${H.esc(msg)}</h2><div class="sheet-foot"><button class="btn" data-no>Hủy</button><button class="btn ${danger ? 'danger' : 'primary'}" data-yes>${H.esc(okLabel)}</button></div>`);

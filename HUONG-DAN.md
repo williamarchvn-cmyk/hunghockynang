@@ -73,15 +73,12 @@ supabase secrets set VAPID_PRIVATE_JWK='{"kty":"EC",...}' VAPID_SUBJECT='mailto:
 
 **Khóa đăng ký người lạ:** sau khi đã tạo xong tài khoản của bạn, vào *Authentication → Sign In / Providers* → tắt **Allow new users to sign up**.
 
-## 7. Bật AI (Gemini)
+## 7. Cập nhật app về sau
 
-1. Vào aistudio.google.com → **Get API key** → tạo key.
-2. Trong app: **Cài đặt → AI** → dán key → bấm nút ↻ để tải danh sách model → chọn model → **Lưu** → **Thử**.
-3. Làm lại trên máy còn lại, vì key chỉ lưu trên từng máy.
+Từ v1.1 app không dùng AI nên không cần API key nào.
 
-## 8. Cập nhật app về sau
-
-Sửa code xong thì tăng số `VERSION` trong `sw.js` (ví dụ `hhkn-v1.0.1`) rồi deploy. Lần mở app sau sẽ hiện thông báo **Có phiên bản mới → Cập nhật**.
+Sửa code xong thì tăng số `VERSION` trong `sw.js` (ví dụ `hhkn-v1.1.1`) rồi deploy. Với Vercel: thay toàn bộ file trong repo (giữ nguyên `config.js`) rồi push, Vercel tự deploy.
+**Nhớ đưa lên cả 2 thư mục mới `fonts/` và `vendor/`** và xóa file cũ `js/ai.js`. Lần mở app sau sẽ hiện thông báo **Có phiên bản mới → Cập nhật**.
 
 ---
 
@@ -100,4 +97,3 @@ Sửa code xong thì tăng số `VERSION` trong `sw.js` (ví dụ `hhkn-v1.0.1`)
 - **"Lỗi đồng bộ"**: kiểm tra đã chạy `schema.sql` chưa, URL và anon key có đúng không.
 - **"Thử từ server" báo 401**: chưa tắt *Enforce JWT verification* hoặc chưa đăng nhập.
 - **Thông báo không đến**: xem *Edge Functions → send-reminders → Logs*, và kiểm tra bằng `select * from cron.job_run_details order by start_time desc limit 10;`.
-- **Gemini báo lỗi model**: bấm ↻ để chọn model đang còn hoạt động.

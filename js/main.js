@@ -73,6 +73,13 @@
     const el = e.target.closest('[data-change]'); if (!el) return;
     const fn = H.Change[el.dataset.change]; if (fn) Promise.resolve(fn(el, e)).catch(err => H.toast(err.message));
   });
+  document.addEventListener('input', e => {
+    const el = e.target.closest('[data-input]'); if (!el) return;
+    const fn = H.Input && H.Input[el.dataset.input]; if (fn) fn(el, e);
+  });
+  // ghi ngay dữ liệu đang chờ khi rời trang / ẩn app
+  window.addEventListener('pagehide', () => S.flush());
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') S.flush(); });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && H.sheetOpen()) { H.closeSheet(); return; }
     const tag = (e.target.tagName || '').toLowerCase();
@@ -121,7 +128,7 @@
       });
     }).catch(e => console.warn('SW', e));
     let reloaded = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => { if (!reloaded) { reloaded = true; location.reload(); } });
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (!reloaded) { reloaded = true; S.flush(); location.reload(); } });
     navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.type === 'navigate') location.hash = e.data.hash; });
   }
 

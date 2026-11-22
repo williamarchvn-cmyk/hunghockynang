@@ -28,18 +28,18 @@
       html += `<div class="card click" data-act="nav" data-to="#/session" style="border-color:var(--ok);margin-bottom:14px"><div class="row"><div class="skill-ico" style="--cs:var(--ok-soft);--c:var(--ok)">${I('clock')}</div><div class="grow" style="flex:1"><div style="font-weight:600">Đang có buổi tập${sk ? ' · ' + esc(sk.name) : ''}</div><div class="small muted num" data-live-clock>${H.fmtClock(elapsedMs(a))}</div></div><button class="btn ok sm">Tiếp tục</button></div></div>`;
     }
     if (!skills.length) {
-      return html + `<div class="card">${empty('target', 'Bắt đầu với kỹ năng đầu tiên', 'Chọn một mẫu có sẵn, nhờ AI thiết kế lộ trình, hoặc tự tạo. App sẽ tự chia 120 phút mỗi ngày cho các kỹ năng.',
-        `<div class="chips" style="justify-content:center">${Object.entries(H.TEMPLATES).map(([k, t]) => `<button class="btn soft" data-act="useTemplate" data-k="${k}">${typeIcon(k)} ${esc(t.name)}</button>`).join('')}<button class="btn primary" data-act="newSkill">${I('ai')} Tạo bằng AI / tự tạo</button></div>`)}</div>`;
+      return html + `<div class="card">${empty('target', 'Bắt đầu với kỹ năng đầu tiên', 'Chọn một mẫu có sẵn hoặc tự tạo. App sẽ tự chia thời gian luyện tập mỗi ngày cho các kỹ năng.',
+        `<div class="chips" style="justify-content:center">${Object.entries(H.TEMPLATES).map(([k, t]) => `<button class="btn soft" data-act="useTemplate" data-k="${k}">${typeIcon(k)} ${esc(t.name)}</button>`).join('')}<button class="btn primary" data-act="newSkill">${I('plus')} Tự tạo</button></div>`)}</div>`;
     }
     const pct = Math.min(mins / (st.dailyMin || 120), 1);
     html += `<div class="grid bento">
       <div class="card span-5"><div class="hero">${C.ring(mins, st.dailyMin, { size: 116, label: H.fmtMinShort(mins), sub: `/ ${H.fmtMinShort(st.dailyMin)}`, color: pct >= 1 ? 'var(--ok)' : 'var(--accent)' })}
         <div class="stack" style="gap:10px;flex:1">
           <div><div class="small muted">Tiến độ hôm nay</div><div style="font-weight:600">${pct >= 1 ? 'Đã đủ mục tiêu, tuyệt!' : `Còn ${H.fmtMin(Math.max((st.dailyMin || 120) - mins, 0))}`}</div></div>
-          <div class="stats-row"><div class="stat"><span class="v num">${streak}</span><span class="k">${I('flame', 'xs')} ngày liền</span></div><div class="stat"><span class="v num">${cardsDue}</span><span class="k">thẻ đến hạn</span></div><div class="stat"><span class="v num">${revDue}</span><span class="k">cần ôn</span></div></div>
+          <div class="stats-row"><div class="stat"><span class="v num">${streak}</span><span class="k">chuỗi ngày</span></div><div class="stat"><span class="v num">${cardsDue}</span><span class="k">thẻ đến hạn</span></div><div class="stat"><span class="v num">${revDue}</span><span class="k">cần ôn</span></div></div>
         </div></div></div>
-      <div class="card span-7">${V.nextNotes()}</div>
       <div class="card span-7"><div class="card-head"><h2>${I('plan')} Kế hoạch hôm nay</h2><span class="chip num">${H.fmtMinShort(plan.planned || 0)}</span></div>${V.planBlocks(plan)}</div>
+      <div class="card span-7">${V.nextNotes()}</div>
       <div class="span-5 stack">${V.skillMini(skills)}${V.topErrors()}</div>
     </div>`;
     return html;
@@ -55,7 +55,7 @@
     const act = b.kind === 'cards' ? `data-act="nav" data-to="#/cards"` : `data-act="startBlock" data-kind="${b.kind}" data-skill="${b.skillId || ''}" data-sub="${b.subId || ''}" data-min="${b.min}" data-bench="${b.benchId || ''}"`;
     return `<div class="block ${b.complete ? 'done' : ''}" style="--c:${color}"><span class="bar-c"></span>
       <div class="grow"><div class="title" style="font-weight:600">${esc(b.title)}</div><div class="meta">${I(icon, 'xs')} ${esc(b.meta || '')} · ${b.min} phút${b.done && !b.complete ? ` · đã tập ${Math.round(b.done)}p` : ''}</div>${b.note ? `<div class="note warn small" style="margin-top:8px">${esc(b.note)}</div>` : ''}</div>
-      ${b.complete ? `<span class="chip ok">${I('check', 'xs')} Xong</span>` : `<button class="btn sm ${b.kind === 'deliberate' ? 'primary' : ''}" ${act}>${I('play', 'xs')} Bắt đầu</button>`}</div>`;
+      ${b.complete ? `<span class="chip ok">${I('check', 'xs')} Xong</span>` : `<button class="btn sm ${b.kind === 'deliberate' ? 'primary' : ''}" ${act} aria-label="Bắt đầu">${I('play', 'xs')}<span class="hide-sm">Bắt đầu</span></button>`}</div>`;
   };
   V.nextNotes = () => {
     const items = H.skills().map(s => { const last = H.sessionsOfSkill(s.id).find(x => x.nextTime); return last ? { s, last } : null; }).filter(Boolean);
@@ -79,7 +79,7 @@
   V.skills = () => {
     const skills = H.skills(); const arch = S.all('skill').filter(s => s.archived);
     let html = `<div class="page-head"><div><div class="eyebrow">${skills.length} kỹ năng đang học</div><h1>Kỹ năng</h1></div><div class="head-actions"><button class="btn primary" data-act="newSkill">${I('plus')} <span>Thêm</span></button></div></div>`;
-    if (!skills.length) html += `<div class="card">${empty('skills', 'Chưa có kỹ năng nào', 'Tạo kỹ năng từ mẫu, bằng AI, hoặc tự tạo.', `<button class="btn primary" data-act="newSkill">${I('plus')} Thêm kỹ năng</button>`)}</div>`;
+    if (!skills.length) html += `<div class="card">${empty('skills', 'Chưa có kỹ năng nào', 'Tạo kỹ năng từ mẫu có sẵn hoặc tự tạo.', `<button class="btn primary" data-act="newSkill">${I('plus')} Thêm kỹ năng</button>`)}</div>`;
     html += `<div class="grid g2 g3">${skills.map(s => {
       const subs = H.subsOf(s.id); const l = H.skillLevel(s.id); const due = subs.filter(x => x.review && x.review.due <= H.today()).length;
       const next = H.pickSub(s.id); const m7 = H.sum(H.sessionsOfSkill(s.id).filter(x => x.day > H.addDays(H.today(), -7)).map(x => x.minutes));
@@ -102,41 +102,12 @@
       <div class="lbl" style="margin-bottom:8px">Dùng mẫu có sẵn</div>
       <div class="stack" style="gap:8px">${Object.entries(H.TEMPLATES).map(([k, t]) => `<button class="sub-item" style="width:100%;text-align:left" data-act="useTemplate" data-k="${k}"><div class="skill-ico" style="--c:${t.color};--cs:${H.soft(t.color)}">${typeIcon(k)}</div><div style="flex:1"><div style="font-weight:600">${esc(t.name)}${has.has(k) ? ' <span class="chip xs">đã có</span>' : ''}</div><div class="small muted">${t.subs.length} kỹ năng con · ${t.benches.length} test mốc</div></div>${I('chev')}</button>`).join('')}</div>
       <div class="divider"></div>
-      <div class="row wrap"><button class="btn primary" style="flex:1" data-act="aiSkillForm">${I('ai')} Thiết kế bằng AI</button><button class="btn" style="flex:1" data-act="blankSkillForm">${I('plus')} Tự tạo</button></div>`);
+      <button class="btn primary block" data-act="blankSkillForm">${I('plus')} Tự tạo kỹ năng mới</button><p class="xs muted" style="margin-top:8px">Mẫu Thể thao là khung chung. Với môn cụ thể (cầu lông, chạy bộ, bơi…), hãy tự tạo và ghi các kỹ năng con của môn đó.</p>`);
   };
   A.closeSheet = () => H.closeSheet();
 
   const typeSeg = (sel) => `<div class="seg" data-seg="type">${Object.entries(H.TYPES).map(([k, t]) => `<button type="button" data-v="${k}" class="${k === sel ? 'sel' : ''}">${t.label}</button>`).join('')}</div>`;
   const segVal = (root, name) => root.querySelector(`[data-seg="${name}"] .sel`)?.dataset.v;
-  A.aiSkillForm = () => {
-    H.openSheet(`<div class="sheet-head"><h2>${I('ai')} Thiết kế lộ trình bằng AI</h2><button class="icon-btn" data-act="closeSheet">${I('x')}</button></div>
-      ${H.AI.ready() ? '' : `<div class="note warn" style="margin-bottom:12px">Chưa có Gemini API key. <a href="#/settings" data-act="closeSheet">Vào Cài đặt → AI</a> để nhập.</div>`}
-      <div class="form">
-        <div class="field"><label>Tên kỹ năng</label><input class="input" name="name" placeholder="VD: Cầu lông, Python, Lập kế hoạch dự án"></div>
-        <div class="field"><label>Nhóm</label>${typeSeg('other')}</div>
-        <div class="field"><label>Trình độ hiện tại</label><input class="input" name="current" placeholder="VD: biết luật cơ bản, chơi được 6 tháng"></div>
-        <div class="field"><label>Muốn đạt tới đâu?</label><textarea class="input" name="goal" placeholder="VD: đánh đôi phong trào ổn định, thắng được người chơi 2 năm"></textarea></div>
-        <div class="two"><div class="field"><label>Phút/ngày</label><input class="input" name="min" type="number" value="40" min="10" step="5"></div><div class="field"><label>Ngày mục tiêu</label><input class="input" name="date" type="date"></div></div>
-        <div class="field"><label>Ghi chú thêm (không bắt buộc)</label><input class="input" name="notes" placeholder="Dụng cụ, thời gian rảnh, chấn thương cần tránh..."></div>
-      </div>
-      <div id="ai-preview"></div>
-      <div class="sheet-foot"><button class="btn primary" data-act="aiSkillGen">${I('ai')} Tạo lộ trình</button></div>`);
-  };
-  A.aiSkillGen = async (el) => {
-    const sh = el.closest('.sheet'); const name = val(sh, 'name'); if (!name) return H.toast('Nhập tên kỹ năng trước nhé');
-    const type = segVal(sh, 'type') || 'other';
-    el.disabled = true; el.innerHTML = '<span class="spin"></span> AI đang thiết kế…';
-    try {
-      const r = await H.AI.decompose({ name, type, current: val(sh, 'current'), goal: val(sh, 'goal'), minPerDay: +val(sh, 'min') || 40, notes: val(sh, 'notes') });
-      const spec = { name, type, goal: r.goal || val(sh, 'goal'), dailyMin: +val(sh, 'min') || 40, targetDate: val(sh, 'date'), subs: r.subs || [], benches: r.benches || [], cards: r.cards || [] };
-      H._pendingSpec = spec;
-      sh.querySelector('#ai-preview').innerHTML = `<div class="divider"></div><div class="note acc" style="margin-bottom:10px"><b>Thuần thục là:</b> ${esc(spec.goal)}</div>
-        <div class="lbl">Kỹ năng con (${spec.subs.length})</div><div class="list">${spec.subs.map(s => `<div class="li"><div class="grow"><div class="title small">${esc(s.name)}</div><div class="sub">${esc(s.desc || '')}</div></div><span class="chip num">mức ${s.level || 0}</span></div>`).join('')}</div>
-        <div class="small muted" style="margin-top:8px">+ ${spec.benches.length} bài test mốc · ${spec.cards.length} thẻ tự kiểm tra</div>`;
-      el.outerHTML = `<button class="btn" data-act="aiSkillGen">${I('refresh')} Tạo lại</button><button class="btn primary" data-act="aiSkillCreate">${I('check')} Dùng lộ trình này</button>`;
-    } catch (e) { H.toast(e.message); el.disabled = false; el.innerHTML = `${I('ai')} Tạo lộ trình`; }
-  };
-  A.aiSkillCreate = () => { const sk = H.createSkillFromSpec(H._pendingSpec); H._pendingSpec = null; H.closeSheet(); H.toast(`Đã tạo "${sk.name}"`); go('#/skill/' + sk.id); };
   A.blankSkillForm = () => A.editSkill(null);
 
   A.editSkill = (el) => {
@@ -150,6 +121,7 @@
         <div class="field"><label>Màu</label><div class="chips" data-seg="color">${H.COLORS.map(c => `<button type="button" class="chip ${c.c === color ? 'sel' : ''}" data-v="${c.c}" style="width:40px;padding:0;justify-content:center" aria-label="Màu ${c.c}"><span class="dot" style="background:${c.c};width:18px;height:18px"></span></button>`).join('')}</div></div>
         <div class="field"><label>Thế nào là thuần thục? (đo được)</label><textarea class="input" name="goal">${esc(s?.goal || '')}</textarea></div>
         <div class="two"><div class="field"><label>Phút/ngày</label><input class="input" type="number" name="dailyMin" min="5" step="5" value="${s?.dailyMin || 30}"></div><div class="field"><label>Ngày mục tiêu</label><input class="input" type="date" name="targetDate" value="${esc(s?.targetDate || '')}"></div></div>
+        ${s ? '' : `<div class="field"><label>Kỹ năng con (mỗi dòng một kỹ năng)</label><textarea class="input" name="subs" rows="5" placeholder="VD cầu lông:&#10;Bộ chân&#10;Phông cầu cao sâu&#10;Đập cầu&#10;Bỏ nhỏ lưới&#10;Đánh đôi: chiến thuật"></textarea><span class="hint">Chia thành 5–8 phần nhỏ, tập riêng từng phần. Thêm/sửa sau cũng được.</span></div>`}
       </div>
       <div class="sheet-foot">${s ? `<button class="btn danger" data-act="archiveSkill" data-id="${s.id}">${s.archived ? 'Bỏ lưu trữ' : 'Lưu trữ'}</button>` : ''}<button class="btn primary" data-act="saveSkill">${I('check')} Lưu</button></div>
       ${s ? `<button class="btn ghost danger block" style="margin-top:10px" data-act="deleteSkill" data-id="${s.id}">${I('trash')} Xóa kỹ năng và toàn bộ dữ liệu</button>` : ''}`);
@@ -158,7 +130,8 @@
     const sh = el.closest('.sheet'); const f = sh.querySelector('.form'); const name = val(sh, 'name'); if (!name) return H.toast('Nhập tên kỹ năng');
     const color = sh.querySelector('[data-seg="color"] .sel')?.dataset.v;
     if (f.dataset.id) { const s = S.get(f.dataset.id); Object.assign(s, { name, type: segVal(sh, 'type'), color, goal: val(sh, 'goal'), dailyMin: +val(sh, 'dailyMin') || 30, targetDate: val(sh, 'targetDate') }); S.put('skill', s); H.closeSheet(); }
-    else { const sk = H.createSkillFromSpec({ name, type: segVal(sh, 'type'), color, goal: val(sh, 'goal'), dailyMin: +val(sh, 'dailyMin') || 30, targetDate: val(sh, 'targetDate') }); H.closeSheet(); go('#/skill/' + sk.id); }
+    else { const subs = val(sh, 'subs').split('\n').map(t => t.trim()).filter(Boolean).map(n => ({ name: n, importance: 2 }));
+      const sk = H.createSkillFromSpec({ name, type: segVal(sh, 'type'), color, goal: val(sh, 'goal'), dailyMin: +val(sh, 'dailyMin') || 30, targetDate: val(sh, 'targetDate'), subs }); H.closeSheet(); go('#/skill/' + sk.id); }
   };
   A.archiveSkill = el => { const s = S.get(el.dataset.id); s.archived = !s.archived; S.put('skill', s); H.closeSheet(); H.toast(s.archived ? 'Đã lưu trữ' : 'Đã khôi phục'); };
   A.deleteSkill = async el => {
@@ -307,10 +280,9 @@
       html += `<div class="card"><div class="lbl" style="margin-bottom:8px">Kỹ năng con</div>${subs.length ? `<select class="input" data-change="pickSub">${subs.map(x => `<option value="${x.id}" ${x.id === subId ? 'selected' : ''}>${esc(x.name)} · mức ${x.level || 0}/5${H.pickSub(skillId)?.id === x.id ? ' · nên tập' : ''}</option>`).join('')}</select>` : `<div class="note">Kỹ năng này chưa có kỹ năng con. <a href="#/skill/${skillId}">Thêm ngay</a></div>`}
         ${sub && sub.model ? `<div class="note small" style="margin-top:10px">${I('book', 'xs')} <b>Mẫu chuẩn:</b> ${esc(sub.model)}</div>` : ''}
         ${last ? `<div class="note acc small" style="margin-top:10px">${I('flag', 'xs')} <b>Lần trước (${H.fmtDayL(last.day)}):</b> ${last.nextTime ? esc(last.nextTime) : ''}${last.mainError ? ` · lỗi chính: ${esc(last.mainError)}` : ''}</div>` : ''}</div>`;
-      html += `<div class="card"><div class="card-head"><h3>Mục tiêu duy nhất của buổi này</h3><button class="btn sm soft" data-act="aiDrills" data-skill="${skillId}" data-sub="${subId || ''}" ${sub ? '' : 'disabled'}>${I('ai')} AI gợi ý</button></div>
+      html += `<div class="card"><div class="card-head"><h3>Mục tiêu duy nhất của buổi này</h3></div>
         <textarea class="input" id="goal" placeholder="Cụ thể và đo được. VD: Ước lượng 5 việc, sai số mỗi việc ≤ 20%">${esc(q.get('goal') || '')}</textarea>
-        <div id="drill-out"></div>
-        ${sub && (sub.drills || []).length ? `<div class="lbl" style="margin:12px 0 8px">Bài tập có sẵn (chạm để chọn)</div><div class="stack" style="gap:6px">${sub.drills.map(d => `<button class="sub-item" style="width:100%;text-align:left" data-act="pickDrill" data-t="${esc(d)}">${I('target', 'xs')}<span class="small" style="flex:1">${esc(d)}</span></button>`).join('')}</div>` : ''}</div>`;
+        ${V.goalSuggestions(sub)}</div>`;
     }
     if (type === 'review') {
       const due = H.dueReviews(); const pool = due.length ? due : [];
@@ -331,17 +303,21 @@
   H.Change = {
     pickSub: (el) => { const q = new URLSearchParams(location.hash.split('?')[1] || ''); q.set('sub', el.value); const g = document.getElementById('goal'); if (g && g.value) q.set('goal', g.value); go('#/practice?' + q.toString()); }
   };
-  A.pickDrill = el => { const g = document.getElementById('goal'); g.value = el.dataset.t; g.focus(); };
-  A.aiDrills = async el => {
-    const s = S.get(el.dataset.skill), sub = S.get(el.dataset.sub); if (!sub) return;
-    if (!H.AI.ready()) return H.toast('Chưa có Gemini API key', { label: 'Cài đặt', fn: () => go('#/settings') });
-    const out = document.getElementById('drill-out'); el.disabled = true; out.innerHTML = `<div class="note small" style="margin-top:10px"><span class="spin"></span> AI đang xem lịch sử tập và gợi ý…</div>`;
-    try {
-      const r = await H.AI.drills({ skill: s, sub, recent: H.sessionsOfSub(sub.id) });
-      out.innerHTML = `<div class="lbl" style="margin:12px 0 8px">${I('ai', 'xs')} AI gợi ý (chạm để chọn)</div><div class="stack" style="gap:6px">${(r.drills || []).map(d => `<button class="sub-item" style="width:100%;text-align:left;align-items:flex-start" data-act="pickDrill" data-t="${esc(`${d.title}. Tiêu chí đạt: ${d.criterion}`)}"><div style="flex:1"><div style="font-weight:600" class="small">${esc(d.title)} <span class="muted">· ${d.minutes || ''} phút</span></div><div class="xs muted">${esc(d.how)}</div><div class="xs" style="color:var(--ok);margin-top:2px">Đạt khi: ${esc(d.criterion)}</div></div></button>`).join('')}</div>`;
-    } catch (e) { out.innerHTML = `<div class="note bad small" style="margin-top:10px">${esc(e.message)}</div>`; }
-    el.disabled = false;
+  // Gợi ý mục tiêu dựa trên dữ liệu của chính bạn (không dùng AI)
+  V.goalSuggestions = (sub) => {
+    if (!sub) return '';
+    const items = []; const hist = H.sessionsOfSub(sub.id);
+    const lastNext = hist.find(x => x.nextTime); if (lastNext) items.push({ tag: 'Lần trước dặn', t: lastNext.nextTime, cls: 'acc' });
+    const errs = H.errorLog(sub.skillId).filter(e => e.sub === sub.id && e.n >= 2).slice(0, 2);
+    errs.forEach(e => items.push({ tag: `Lỗi lặp ${e.n}×`, t: `Sửa lỗi: ${e.text}`, cls: 'bad' }));
+    const lastDel = hist.find(x => x.type === 'deliberate' && x.goal && x.attempts >= 5);
+    if (lastDel) { const r = lastDel.success / lastDel.attempts; const z = H.zone(r, lastDel.attempts); const pre = z.key === 'easy' ? 'Khó hơn: ' : z.key === 'hard' ? 'Chia nhỏ hơn: ' : 'Lặp lại: '; items.push({ tag: `Buổi trước ${H.pct(r)}`, t: pre + lastDel.goal.replace(/^(Khó hơn|Chia nhỏ hơn|Lặp lại): /, ''), cls: z.cls }); }
+    (sub.drills || []).forEach(d => items.push({ tag: 'Bài tập', t: d, cls: '' }));
+    const seen = new Set(); const uniq = items.filter(x => !seen.has(x.t) && seen.add(x.t));
+    if (!uniq.length) return `<p class="xs muted" style="margin-top:8px">Mẹo: ghi rõ số lần thử và tiêu chí đạt, ví dụ "10 lần, đạt khi …".</p>`;
+    return `<div class="lbl" style="margin:12px 0 8px">Gợi ý (chạm để chọn)</div><div class="stack" style="gap:6px">${uniq.slice(0, 6).map(x => `<button class="sub-item sugg" data-act="pickDrill" data-t="${esc(x.t)}"><span class="chip xs ${x.cls}">${esc(x.tag)}</span><span class="small" style="flex:1">${esc(x.t)}</span></button>`).join('')}</div>`;
   };
+  A.pickDrill = el => { const g = document.getElementById('goal'); g.value = el.dataset.t; g.focus(); };
   A.startSession = el => {
     const type = el.dataset.type; const goalEl = document.getElementById('goal');
     let goal = goalEl ? goalEl.value.trim() : '';
@@ -394,7 +370,7 @@
     const sub = document.querySelector('[data-timer-sub]'); if (sub) sub.textContent = left < 0 ? 'Đã đủ thời gian · bấm Kết thúc khi xong' : `Đã tập ${H.fmtClock(elapsedMs(a))} / ${a.plannedMin} phút`;
     if (left <= 0 && !a.alerted && !a.pausedAt) {
       a.alerted = true; S.saveLocal(); H.beep();
-      if (document.visibilityState !== 'visible' && Notification.permission === 'granted') navigator.serviceWorker.ready.then(r => r.showNotification('Hết giờ tập', { body: a.goal, icon: 'icons/icon-192.png', badge: 'icons/badge-96.png', tag: 'timer' }));
+      if (document.visibilityState !== 'visible' && 'Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) navigator.serviceWorker.ready.then(r => r.showNotification('Hết giờ tập', { body: a.goal, icon: 'icons/icon-192.png', badge: 'icons/badge-96.png', tag: 'timer' }));
       H.toast('Hết giờ! Hoàn thành nốt lượt đang làm rồi bấm Kết thúc.');
     }
   };
@@ -484,13 +460,13 @@
     const due = H.dueCards(H.today(), sid || null); const all = S.all('card').filter(c => !sid || c.skillId === sid);
     const filter = (q.get('f') || '').toLowerCase();
     const list = all.filter(c => !filter || (c.front + ' ' + c.back).toLowerCase().includes(filter)).sort((a, b) => (a.due || '').localeCompare(b.due || ''));
-    return `<div class="page-head"><div><div class="eyebrow">Tự kiểm tra · ôn giãn cách</div><h1>Thẻ</h1></div><div class="head-actions"><button class="btn" data-act="aiCards" data-skill="${sid}">${I('ai')} <span>AI tạo</span></button><button class="btn primary" data-act="editCard" data-skill="${sid}">${I('plus')} <span>Thêm</span></button></div></div>
+    return `<div class="page-head"><div><div class="eyebrow">Tự kiểm tra · ôn giãn cách</div><h1>Thẻ</h1></div><div class="head-actions"><button class="btn" data-act="bulkCards" data-skill="${sid}">${I('upload')} <span>Nhập nhiều</span></button><button class="btn primary" data-act="editCard" data-skill="${sid}">${I('plus')} <span>Thêm</span></button></div></div>
       <div class="tabs"><button class="chip ${!sid ? 'sel' : ''}" data-act="nav" data-to="#/cards">Tất cả</button>${skills.map(s => `<button class="chip ${s.id === sid ? 'sel' : ''}" data-act="nav" data-to="#/cards?skill=${s.id}"><span class="dot" style="background:${s.color}"></span>${esc(s.name)}</button>`).join('')}</div>
       <div class="grid bento">
         <div class="card span-5"><div class="hero">${C.ring(due.length ? 0 : 1, 1, { size: 100, stroke: 10, label: String(due.length), sub: 'đến hạn', color: due.length ? 'var(--warn)' : 'var(--ok)' })}<div class="stack" style="gap:8px;flex:1"><div class="small muted">${all.length} thẻ · ${all.filter(c => (c.reps || 0) >= 3).length} đã nhớ chắc</div><button class="btn primary block" data-act="startCards" data-skill="${sid}" ${due.length ? '' : 'disabled'}>${I('play')} Ôn ${due.length} thẻ</button></div></div></div>
         <div class="card span-7"><div class="card-head"><h3>Mẹo</h3></div><p class="small muted">Cố nhớ đáp án trước khi lật thẻ. Việc phải cố nhớ chính là lúc trí nhớ được củng cố. Chấm thật lòng: thẻ khó sẽ quay lại sớm, thẻ dễ sẽ giãn ra 1 → 3 → 7+ ngày.</p></div>
         <div class="card span-12"><div class="card-head"><h3>Tất cả thẻ</h3><input class="input" style="max-width:240px;min-height:38px" placeholder="Tìm…" value="${esc(filter)}" data-change="cardFilter"></div>
-          ${list.length ? `<div class="list">${list.slice(0, 200).map(c => { const s = S.get(c.skillId); return `<div class="li click" data-act="editCard" data-id="${c.id}"><span class="dot" style="background:${s?.color || '#999'}"></span><div class="grow"><div class="title small trunc">${esc(c.front)}</div><div class="sub trunc">${esc(c.back)}</div></div><span class="chip xs ${c.due <= H.today() ? 'warn' : ''}">${c.due <= H.today() ? 'Đến hạn' : H.fmtDay(c.due)}</span></div>`; }).join('')}</div>` : empty('cards', 'Chưa có thẻ', 'Thêm thẻ cho phần kiến thức cần nhớ, hoặc nhờ AI tạo từ ghi chú.')}</div>
+          ${list.length ? `<div class="list">${list.slice(0, 200).map(c => { const s = S.get(c.skillId); return `<div class="li click" data-act="editCard" data-id="${c.id}"><span class="dot" style="background:${s?.color || '#999'}"></span><div class="grow"><div class="title small trunc">${esc(c.front)}</div><div class="sub trunc">${esc(c.back)}</div></div><span class="chip xs ${c.due <= H.today() ? 'warn' : ''}">${c.due <= H.today() ? 'Đến hạn' : H.fmtDay(c.due)}</span></div>`; }).join('')}</div>` : empty('cards', 'Chưa có thẻ', 'Thêm thẻ cho phần kiến thức cần nhớ, hoặc dán nhiều thẻ một lúc bằng nút Nhập nhiều.')}</div>
       </div>`;
   };
   H.Change.cardFilter = el => { const q = new URLSearchParams(location.hash.split('?')[1] || ''); q.set('f', el.value); history.replaceState(null, '', '#/cards?' + q.toString()); H.render(); const i = document.querySelector('[data-change="cardFilter"]'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } };
@@ -525,26 +501,20 @@
     else { H.newCard(val(sh, 'skill'), front, back); sh.querySelector('[name="front"]').value = ''; sh.querySelector('[name="back"]').value = ''; sh.querySelector('[name="front"]').focus(); H.toast('Đã thêm thẻ'); }
   };
   A.delCard = async el => { if (await H.confirm('Xóa thẻ này?', 'Xóa', true)) S.del(el.dataset.id); };
-  A.aiCards = el => {
+  A.bulkCards = el => {
     const sid = el.dataset.skill || H.skills()[0]?.id; if (!sid) return H.toast('Tạo kỹ năng trước');
-    H.openSheet(`<div class="sheet-head"><h2>${I('ai')} AI tạo thẻ từ ghi chú</h2><button class="icon-btn" data-act="closeSheet">${I('x')}</button></div>
-      ${H.AI.ready() ? '' : `<div class="note warn" style="margin-bottom:12px">Chưa có Gemini API key. Vào Cài đặt → AI.</div>`}
+    H.openSheet(`<div class="sheet-head"><h2>Nhập nhiều thẻ</h2><button class="icon-btn" data-act="closeSheet">${I('x')}</button></div>
       <div class="form"><div class="field"><label>Kỹ năng</label><select class="input" name="skill">${H.skills().map(s => `<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></div>
-      <div class="field"><label>Dán ghi chú, tài liệu, nội dung vừa học</label><textarea class="input" name="text" rows="7"></textarea></div>
-      <div class="field"><label>Số thẻ</label><input class="input" type="number" name="n" value="10" min="3" max="30"></div></div>
-      <div id="ai-cards-out"></div>
-      <div class="sheet-foot"><button class="btn primary" data-act="aiCardsGen">${I('ai')} Tạo thẻ</button></div>`);
+      <div class="field"><label>Mỗi dòng một thẻ: câu hỏi | đáp án</label><textarea class="input" name="text" rows="8" placeholder="Độ phức tạp tìm kiếm nhị phân? | O(log n)&#10;SMART gồm những gì? | Specific, Measurable, Achievable, Relevant, Time-bound" data-input="bulkPreview"></textarea><span class="hint">Dùng dấu | hoặc phím Tab để ngăn câu hỏi và đáp án. Dán trực tiếp từ Excel/Google Sheets (2 cột) cũng được.</span></div></div>
+      <div class="small muted" data-bulk-count style="margin-top:8px">0 thẻ hợp lệ</div>
+      <div class="sheet-foot"><button class="btn primary" data-act="bulkCardsSave">${I('check')} Thêm thẻ</button></div>`);
   };
-  A.aiCardsGen = async el => {
-    const sh = el.closest('.sheet'); const text = val(sh, 'text'); if (!text) return H.toast('Dán nội dung trước');
-    const s = S.get(val(sh, 'skill')); el.disabled = true; el.innerHTML = '<span class="spin"></span> Đang tạo…';
-    try {
-      const r = await H.AI.cards({ skill: s, text, n: +val(sh, 'n') || 10 }); H._pendingCards = { skillId: s.id, cards: r.cards || [] };
-      sh.querySelector('#ai-cards-out').innerHTML = `<div class="divider"></div><div class="lbl">Xem trước (${H._pendingCards.cards.length} thẻ)</div><div class="list">${H._pendingCards.cards.map(c => `<div class="li"><div class="grow"><div class="title small">${esc(c.front)}</div><div class="sub">${esc(c.back)}</div></div></div>`).join('')}</div>`;
-      el.outerHTML = `<button class="btn primary" data-act="aiCardsSave">${I('check')} Thêm ${H._pendingCards.cards.length} thẻ</button>`;
-    } catch (e) { H.toast(e.message); el.disabled = false; el.innerHTML = `${I('ai')} Tạo thẻ`; }
+  const parseBulk = t => t.split('\n').map(l => l.split(/\t|\s\|\s|\|/)).filter(p => p.length >= 2 && p[0].trim() && p.slice(1).join(' | ').trim()).map(p => ({ front: p[0].trim(), back: p.slice(1).join(' | ').trim() }));
+  H.Input = { bulkPreview: el => { const n = parseBulk(el.value).length; const c = el.closest('.sheet').querySelector('[data-bulk-count]'); if (c) c.textContent = `${n} thẻ hợp lệ`; } };
+  A.bulkCardsSave = el => {
+    const sh = el.closest('.sheet'); const cards = parseBulk(val(sh, 'text')); if (!cards.length) return H.toast('Chưa có dòng nào đúng dạng "câu hỏi | đáp án"');
+    const sid = val(sh, 'skill'); cards.forEach(c => H.newCard(sid, c.front, c.back, true)); S.emit('local'); H.closeSheet(); H.toast(`Đã thêm ${cards.length} thẻ`);
   };
-  A.aiCardsSave = () => { const p = H._pendingCards; p.cards.forEach(c => H.newCard(p.skillId, c.front, c.back, true)); S.emit('local'); H.closeSheet(); H.toast(`Đã thêm ${p.cards.length} thẻ`); };
 
   /* =================== THỐNG KÊ =================== */
   V.stats = () => {
@@ -570,6 +540,7 @@
         <div class="stat"><span class="v num">${lvlUps}</span><span class="k">kỹ năng con lên mức</span></div>
         <div class="stat"><span class="v num">${H.fmtMinShort(total)}</span><span class="k">tổng đã tập</span></div>
       </div></div>
+      <div class="card span-12"><div class="card-head"><h2>${I('spark')} Nhận xét tuần này</h2><span class="xs muted">tự động từ số liệu</span></div>${V.insights(last7, prev7, m7, mp7, rate7, focus7, delib7)}</div>
       <div class="card span-7"><div class="card-head"><h2>Phút mỗi tuần</h2></div>${C.stackBars(weeks)}<div class="legend" style="margin-top:8px">${skills.filter(s => !s.archived).map(s => `<span><i class="dot" style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')}</div></div>
       <div class="card span-5"><div class="card-head"><h2>16 tuần gần nhất</h2></div>${C.heatmap(byDay, 16, st.dailyMin)}<div class="legend" style="margin-top:10px"><span>Ít</span><span class="heat" style="display:inline-flex;grid-template-rows:none;gap:3px"><i></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i></span><span>Đủ ${st.dailyMin}p</span></div></div>
       <div class="card span-7"><div class="card-head"><h2>Theo kỹ năng · 7 ngày</h2></div><div class="list">${H.skills().map(sk => { const xs = last7.filter(x => x.skillId === sk.id); const a2 = xs.filter(x => x.attempts); const r = a2.length ? H.sum(a2.map(x => x.success)) / H.sum(a2.map(x => x.attempts)) : null; const target = sk.dailyMin * 7; const m = H.sum(xs.map(x => x.minutes)); return `<div class="li"><span class="dot" style="background:${sk.color}"></span><div class="grow"><div class="row"><span class="title small" style="flex:1">${esc(sk.name)}</span><span class="small num">${H.fmtMinShort(m)} / ${H.fmtMinShort(target)}</span></div><div class="bar" style="--c:${sk.color};margin-top:6px"><span style="width:${Math.min(m / target, 1) * 100}%"></span></div><div class="xs muted" style="margin-top:4px">${xs.length} buổi · tỉ lệ đạt ${r !== null ? H.pct(r) : '—'} · mức TB ${H.skillLevel(sk.id).toFixed(1)}/5</div></div></div>`; }).join('') || '<p class="small muted">Chưa có kỹ năng.</p>'}</div></div>
@@ -577,27 +548,51 @@
         <div class="form"><div class="field"><label>Điều gì hiệu quả?</label><textarea class="input" name="rv-good" rows="2">${esc(rv?.good || '')}</textarea></div>
         <div class="field"><label>Điều gì chưa ổn?</label><textarea class="input" name="rv-bad" rows="2">${esc(rv?.bad || '')}</textarea></div>
         <div class="field"><label>Tuần tới thay đổi gì?</label><textarea class="input" name="rv-next" rows="2">${esc(rv?.next || '')}</textarea></div>
-        <div class="row"><button class="btn primary" style="flex:1" data-act="saveReview">${I('check')} Lưu</button><button class="btn soft" style="flex:1" data-act="aiWeekly">${I('ai')} AI nhận xét</button></div>
-        <div id="ai-weekly">${rv?.ai ? V.aiWeeklyOut(rv.ai) : ''}</div></div></div>
+        <button class="btn primary" data-act="saveReview">${I('check')} Lưu rà soát</button></div></div>
     </div>`;
   };
-  V.aiWeeklyOut = r => `<div class="divider"></div><div class="note acc small" style="margin-bottom:10px">${esc(r.summary || '')}</div>${(r.wins || []).length ? `<div class="lbl">Làm tốt</div><ul class="small" style="margin:4px 0 10px;padding-left:18px">${r.wins.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}${(r.issues || []).length ? `<div class="lbl">Vấn đề</div><ul class="small" style="margin:4px 0 10px;padding-left:18px">${r.issues.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}${(r.next || []).length ? `<div class="lbl">Tuần tới</div><ul class="small" style="margin:4px 0 0;padding-left:18px">${r.next.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}`;
+  // Nhận xét dựa trên quy tắc của phương pháp luyện tập có chủ đích
+  V.insights = (last7, prev7, m7, mp7, rate7, focus7, delib7) => {
+    const st = H.settings(); const out = []; const t = H.today();
+    const add = (cls, text) => out.push({ cls, text });
+    if (!last7.length) return `<div class="note">Chưa có buổi tập nào trong 7 ngày qua. Bắt đầu bằng một buổi ngắn 15 phút để có số liệu.</div>`;
+    const target = st.dailyMin * (7 - (st.restDays || []).length);
+    const days = new Set(last7.map(s => s.day)).size;
+    add(m7 >= target * 0.9 ? 'ok' : m7 >= target * 0.6 ? 'warn' : 'bad', `Tập ${H.fmtMin(m7)} / mục tiêu ${H.fmtMin(target)} (${Math.round(m7 / (target || 1) * 100)}%), trong ${days}/7 ngày.${mp7 ? ` So với tuần trước: ${m7 >= mp7 ? '+' : ''}${Math.round((m7 - mp7) / mp7 * 100)}%.` : ''}`);
+    if (rate7 !== null) {
+      if (rate7 > 0.85) add('warn', `Tỉ lệ đạt ${H.pct(rate7)}: hơi dễ. Tuần tới tăng độ khó (thêm tốc độ, ràng buộc, bài khó hơn) để còn tiến bộ.`);
+      else if (rate7 < 0.6) add('bad', `Tỉ lệ đạt ${H.pct(rate7)}: đang quá sức. Chia bài nhỏ hơn hoặc lùi một bậc độ khó.`);
+      else add('ok', `Tỉ lệ đạt ${H.pct(rate7)}: đúng vùng vừa sức 60–85%. Giữ nhịp này.`);
+    } else add('warn', 'Chưa đếm lần Đạt/Trượt. Không có phản hồi thì khó biết độ khó có vừa không — hãy bấm Đạt/Trượt mỗi lần thử.');
+    if (m7 && delib7 / m7 < 0.5) add('warn', `Chỉ ${H.pct(delib7 / m7)} thời gian là tập có chủ đích. Phần cốt lõi nên chiếm trên một nửa.`);
+    if (focus7 !== null && focus7 < 3.5) add('warn', `Mức tập trung TB ${focus7.toFixed(1)}/5. Thử buổi ngắn hơn (25 phút), tắt thông báo điện thoại, tập vào giờ tỉnh táo nhất.`);
+    const noNext = last7.filter(s => s.type === 'deliberate' && !s.nextTime).length;
+    if (noNext >= 2) add('warn', `${noNext} buổi không ghi "lần sau chỉnh gì". Ghi chú này giúp buổi sau bắt đầu đúng chỗ.`);
+    H.skills().forEach(sk => {
+      const m = H.sum(last7.filter(x => x.skillId === sk.id).map(x => x.minutes));
+      if (m < sk.dailyMin * 7 * 0.4) add('bad', `${sk.name}: chỉ ${H.fmtMinShort(m)} / ${H.fmtMinShort(sk.dailyMin * 7)} — đang bị bỏ quên.`);
+      const stale = H.subsOf(sk.id).filter(x => (x.level || 0) < 5 && (x.importance || 2) >= 3 && (!x.lastPracticed || H.diffDays(t, x.lastPracticed) > 14));
+      if (stale.length) add('warn', `${sk.name}: "${stale[0].name}" quan trọng nhưng ${stale[0].lastPracticed ? 'hơn 14 ngày chưa tập' : 'chưa tập lần nào'}.`);
+      const top = H.errorLog(sk.id).find(e => e.n >= 3 && e.last > H.addDays(t, -14));
+      if (top) add('bad', `${sk.name}: lỗi "${top.text}" lặp ${top.n} lần. Lấy nó làm mục tiêu buổi tập tới.`);
+    });
+    const overdue = H.dueCards().length; if (overdue > 30) add('warn', `${overdue} thẻ đang đến hạn. Ôn 10 phút đầu mỗi buổi để không dồn.`);
+    const benchLate = S.all('benchmark').filter(b => H.Store.get(b.skillId) && !H.Store.get(b.skillId).archived && H.benchDue(b)).length;
+    if (benchLate) add('warn', `${benchLate} bài test mốc đến hạn đo. Đo để biết tiến bộ thật.`);
+    const ico = { ok: 'check', warn: 'flag', bad: 'bug' };
+    // dòng tổng quan đứng đầu, sau đó ưu tiên vấn đề nặng; tối đa 6 dòng cho gọn
+    const rank = { bad: 0, warn: 1, ok: 2 }; const head = out.shift();
+    out.sort((x, y) => rank[x.cls] - rank[y.cls]); const shown = [head, ...out.slice(0, 5)]; const more = out.length - 5;
+    return `<div class="insights">${shown.map(o => `<div class="ins ${o.cls}">${I(ico[o.cls], 'xs')}<span>${esc(o.text)}</span></div>`).join('')}</div>${more > 0 ? `<p class="xs muted" style="margin-top:8px">+${more} nhận xét khác. Xử lý các mục trên trước.</p>` : ''}`;
+  };
   const reviewRec = () => { const wk = H.isoWeek(H.today()); return S.all('review').find(r => r.week === wk) || { id: H.uid(), week: wk }; };
   A.saveReview = () => { const r = reviewRec(); const m = document.getElementById('view'); Object.assign(r, { good: val(m, 'rv-good'), bad: val(m, 'rv-bad'), next: val(m, 'rv-next') }); S.put('review', r); H.toast('Đã lưu rà soát tuần'); };
-  A.aiWeekly = async el => {
-    if (!H.AI.ready()) return H.toast('Chưa có Gemini API key', { label: 'Cài đặt', fn: () => go('#/settings') });
-    const t = H.today(); const last7 = H.sessions().filter(s => s.day > H.addDays(t, -7));
-    const summary = { muc_tieu_phut_moi_ngay: H.settings().dailyMin, ky_nang: H.skills().map(sk => ({ ten: sk.name, muc_tieu_phut_ngay: sk.dailyMin, muc_trung_binh: +H.skillLevel(sk.id).toFixed(2), ky_nang_con: H.subsOf(sk.id).map(x => ({ ten: x.name, muc: x.level, lan_tap_cuoi: x.lastPracticed })), buoi_tap: last7.filter(s => s.skillId === sk.id).map(s => ({ ngay: s.day, loai: s.type, phut: s.minutes, dat: s.success, thu: s.attempts, tap_trung: s.focus, rpe: s.rpe, loi: s.mainError, lan_sau: s.nextTime })) })), the_on: last7.filter(s => s.type === 'cards').length, tu_ra_soat: { tot: val(document.getElementById('view'), 'rv-good'), chua_tot: val(document.getElementById('view'), 'rv-bad') } };
-    el.disabled = true; el.innerHTML = '<span class="spin"></span>';
-    try { const r = await H.AI.weekly(summary); const rec = reviewRec(); const m = document.getElementById('view'); Object.assign(rec, { good: val(m, 'rv-good'), bad: val(m, 'rv-bad'), next: val(m, 'rv-next'), ai: r }); S.put('review', rec); }
-    catch (e) { H.toast(e.message); el.disabled = false; el.innerHTML = `${I('ai')} AI nhận xét`; }
-  };
 
   /* =================== CÀI ĐẶT =================== */
   V.settings = () => {
     const st = H.settings(); const Sy = H.Sync; const cfg = Sy.cfg(); const base = window.HHKN_CONFIG || {};
     const needCfg = !(base.supabaseUrl && base.supabaseAnonKey);
-    let html = `<div class="page-head"><div><div class="eyebrow">Hùng học kỹ năng · v1.0</div><h1>Cài đặt</h1></div></div><div class="grid g2">`;
+    let html = `<div class="page-head"><div><div class="eyebrow">Hùng học kỹ năng · v1.1</div><h1>Cài đặt</h1></div></div><div class="grid g2 settings-grid">`;
     // Đồng bộ
     html += `<div class="card"><div class="card-head"><h2>${I('cloud')} Đồng bộ</h2><span class="row small"><span class="sync-dot" data-sync-dot></span></span></div>
       <p class="small muted" style="margin-bottom:12px" data-sync-text>${esc(Sy.label())}</p>`;
@@ -615,15 +610,10 @@
     // Nhắc tập
     html += `<div class="card"><div class="card-head"><h2>${I('bell')} Nhắc tập</h2><span class="chip" data-push-state>…</span></div>
       <div class="row wrap" style="margin-bottom:12px"><button class="btn primary sm" data-act="enablePush">Bật thông báo</button><button class="btn sm" data-act="testLocal">Thử trên máy</button><button class="btn sm" data-act="testServer">Thử từ server</button><button class="btn sm ghost" data-act="disablePush">Tắt</button></div>
-      <div class="list">${(st.reminders || []).map((r, i) => `<div class="li"><span style="flex:1" class="small">Nhắc lúc</span><input class="input" type="time" value="${r.time}" style="width:130px;min-height:38px" data-change="remTime" data-i="${i}"><label class="switch"><input type="checkbox" ${r.on ? 'checked' : ''} data-change="remOn" data-i="${i}"><span></span></label></div>`).join('')}
-      <div class="li"><span style="flex:1" class="small">Nhắc nếu chưa đủ phút lúc</span><input class="input" type="time" value="${st.evening?.time || '21:30'}" style="width:130px;min-height:38px" data-change="eveTime"><label class="switch"><input type="checkbox" ${st.evening?.on ? 'checked' : ''} data-change="eveOn"><span></span></label></div></div>
+      <div class="list">${(st.reminders || []).map((r, i) => `<div class="li"><span style="flex:1" class="small">Nhắc lúc</span><input class="input" type="time" value="${r.time}" style="width:150px;min-height:38px" data-change="remTime" data-i="${i}"><label class="switch"><input type="checkbox" ${r.on ? 'checked' : ''} data-change="remOn" data-i="${i}"><span></span></label></div>`).join('')}
+      <div class="li"><span style="flex:1" class="small">Nhắc nếu chưa đủ phút lúc</span><input class="input" type="time" value="${st.evening?.time || '21:30'}" style="width:150px;min-height:38px" data-change="eveTime"><label class="switch"><input type="checkbox" ${st.evening?.on ? 'checked' : ''} data-change="eveOn"><span></span></label></div></div>
       <div class="row" style="margin-top:10px"><button class="btn sm ghost" data-act="addRem">${I('plus', 'xs')} Thêm giờ nhắc</button><span class="spacer"></span><button class="btn sm" data-act="downloadIcs">${I('calendar', 'xs')} File lịch .ics</button></div>
       <p class="xs muted" style="margin-top:8px">Thông báo từ server cần đăng nhập và đã cài Edge Function (xem HUONG-DAN.md). File .ics là cách dự phòng: thêm lịch nhắc lặp lại vào Google Calendar.</p></div>`;
-    // AI
-    html += `<div class="card"><div class="card-head"><h2>${I('ai')} AI (Gemini)</h2>${H.AI.ready() ? '<span class="chip ok">Đã có key</span>' : '<span class="chip">Chưa có key</span>'}</div><div class="form">
-      <div class="field"><label>Gemini API key</label><input class="input" type="password" name="gkey" value="${esc(S.local.geminiKey || '')}" placeholder="Lấy tại aistudio.google.com"><span class="hint">Key chỉ lưu trên máy này, không gửi lên server đồng bộ. Cần nhập trên cả laptop và điện thoại.</span></div>
-      <div class="field"><label>Model</label><div class="row"><input class="input" name="gmodel" value="${esc(H.AI.model())}" list="gmodels"><datalist id="gmodels"></datalist><button class="btn" data-act="loadModels" aria-label="Tải danh sách model">${I('refresh')}</button></div></div>
-      <div class="row"><button class="btn primary" style="flex:1" data-act="saveAI">Lưu</button><button class="btn" data-act="testAI">Thử</button></div></div></div>`;
     // Dữ liệu
     html += `<div class="card"><div class="card-head"><h2>${I('download')} Dữ liệu</h2></div><p class="small muted" style="margin-bottom:12px">${Object.keys(S.recs).length} bản ghi trên máy · ${Object.keys(S.meta.dirty).length} chưa đồng bộ.</p>
       <div class="row wrap"><button class="btn" data-act="exportJson">${I('download', 'xs')} Xuất JSON</button><label class="btn">${I('upload', 'xs')} Nhập JSON<input type="file" accept="application/json" hidden data-change="importJson"></label><button class="btn danger" data-act="wipeLocal">${I('trash', 'xs')} Xóa dữ liệu trên máy</button></div></div>`;
@@ -663,9 +653,6 @@
     const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Hung hoc ky nang//VI\r\nCALSCALE:GREGORIAN\r\nBEGIN:VTIMEZONE\r\nTZID:Asia/Ho_Chi_Minh\r\nBEGIN:STANDARD\r\nDTSTART:19700101T000000\r\nTZOFFSETFROM:+0700\r\nTZOFFSETTO:+0700\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\n${evs}\r\nEND:VCALENDAR`;
     download('nhac-tap-ky-nang.ics', ics, 'text/calendar');
   };
-  A.saveAI = () => { const m = document.getElementById('view'); S.local.geminiKey = val(m, 'gkey'); S.local.geminiModel = val(m, 'gmodel') || H.AI.DEFAULT_MODEL; S.saveLocal(); H.render(); H.toast('Đã lưu cài đặt AI'); };
-  A.loadModels = async () => { const m = document.getElementById('view'); S.local.geminiKey = val(m, 'gkey'); S.saveLocal(); try { const list = await H.AI.listModels(); document.getElementById('gmodels').innerHTML = list.map(x => `<option value="${esc(x)}">`).join(''); H.toast(`Có ${list.length} model. Chạm ô Model để chọn.`); } catch (e) { H.toast(e.message); } };
-  A.testAI = async el => { A.saveAI(); el = document.querySelector('[data-act="testAI"]'); el.disabled = true; el.innerHTML = '<span class="spin"></span>'; try { const t = await H.AI.call('Trả lời đúng một câu ngắn: "Sẵn sàng huấn luyện!"', { json: false }); H.toast('Gemini: ' + t.slice(0, 80)); } catch (e) { H.toast(e.message); } el.disabled = false; el.textContent = 'Thử'; };
   const download = (name, text, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); };
   A.exportJson = () => download(`hung-hoc-ky-nang-${H.today()}.json`, JSON.stringify({ app: 'hung-hoc-ky-nang', version: 1, exported: new Date().toISOString(), records: Object.values(S.recs) }, null, 1), 'application/json');
   H.Change.importJson = async el => {
@@ -673,5 +660,5 @@
     try { const j = JSON.parse(await f.text()); const recs = j.records || []; if (!await H.confirm(`Nhập ${recs.length} bản ghi? Bản ghi mới hơn sẽ được giữ.`, 'Nhập')) return; let n = 0; recs.forEach(r => { if (S.applyRemote(r)) { S.meta.dirty[r.id] = r.updated_at; n++; } }); S.persist(); S.emit('local'); H.Sync.schedule(); H.toast(`Đã nhập ${n} bản ghi`); }
     catch (e) { H.toast('File không hợp lệ'); }
   };
-  A.wipeLocal = async () => { if (!await H.confirm('Xóa toàn bộ dữ liệu trên máy này? Dữ liệu trên server (nếu có) vẫn giữ.', 'Xóa', true)) return; S.recs = {}; S.meta = { dirty: {}, lastPull: null, syncedUser: null }; S.persist(); S.local.active = null; S.saveLocal(); location.reload(); };
+  A.wipeLocal = async () => { if (!await H.confirm('Xóa toàn bộ dữ liệu trên máy này? Dữ liệu trên server (nếu có) vẫn giữ.', 'Xóa', true)) return; S.recs = {}; S.meta = { dirty: {}, lastPull: null, syncedUser: null }; S.bump(); S.flush(); S.local.active = null; S.saveLocal(); location.reload(); };
 })();

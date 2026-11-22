@@ -276,6 +276,21 @@ svg.i.xs{width:15px;height:15px;vertical-align:-3px}
 .sugg{width:100%;text-align:left;padding:10px 12px}
 .sugg .chip{flex:none}
 .settings-grid{align-items:start}
+/* ===== Cài đặt: lưới đều theo chiều ngang ===== */
+.set-sec{margin-top:16px}
+.card-head+.set-sec{margin-top:0}
+.set-sec>.lbl{display:block;margin-bottom:8px}
+.opt-grid{display:grid;grid-template-columns:repeat(var(--n,4),minmax(0,1fr));gap:6px}
+.opt-grid .chip{width:100%;padding:0;justify-content:center}
+.btn-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.btn-grid .btn{width:100%;min-width:0;padding:0 10px}
+.btn-grid .full{grid-column:1/-1}
+.set-row{display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 0;border-top:1px solid var(--line)}
+.set-sec>.set-row:first-child,.set-sec>div>.set-row:first-child{border-top:0}
+.set-row .lbl-t{flex:1;min-width:0;font-size:14px}
+.set-row .input{flex:none;min-height:40px;padding:6px 10px}
+.set-row .input[type=time]{width:134px;padding:6px 8px}
+.set-row .input[type=number]{width:80px;text-align:center}
 @media (max-width:520px){.hide-sm{display:none}.block .btn.sm{width:44px;padding:0}.block{padding:12px}.stats-row .k{white-space:nowrap;font-size:11.5px}.stats-row{gap:4px}.hero{gap:14px}}
 /* khi mở hộp thoại, thông báo nổi lên trên cùng để không che nút */
 body.sheet-open .toast-wrap{bottom:auto;top:calc(12px + var(--safe-t));left:0}

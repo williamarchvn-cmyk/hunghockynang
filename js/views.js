@@ -7,7 +7,7 @@
   const typeIcon = t => I((H.TYPES[t] || H.TYPES.other).icon);
   const skillChip = s => `<span class="chip" style="background:${H.soft(s.color)};color:${s.color}"><span class="dot" style="background:${s.color}"></span>${esc(s.name)}</span>`;
   const lvlMeter = (l, c) => `<span class="lvl" style="--c:${c}" aria-label="Mức ${l}/5">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= l ? 'on' : ''}"></i>`).join('')}</span>`;
-  const empty = (icon, title, text, btn = '') => `<div class="empty"><div class="em-ico">${I(icon)}</div><h3>${esc(title)}</h3><p class="small">${text}</p>${btn ? `<div style="margin-top:14px">${btn}</div>` : ''}</div>`;
+  const empty = (icon, title, text, btn = '') => `<div class="empty"><div class="em-ico">${I(icon)}</div><h3>${esc(title)}</h3>${text ? `<p class="small">${text}</p>` : ''}${btn ? `<div style="margin-top:14px">${btn}</div>` : ''}</div>`;
   const val = (root, name) => { const el = root.querySelector(`[name="${name}"]`); return el ? el.value.trim() : ''; };
   const go = h => { location.hash = h; };
   H.go = go;
@@ -28,10 +28,10 @@
       html += `<div class="card click" data-act="nav" data-to="#/session" style="border-color:var(--ok);margin-bottom:14px"><div class="row"><div class="skill-ico" style="--cs:var(--ok-soft);--c:var(--ok)">${I('clock')}</div><div class="grow" style="flex:1"><div style="font-weight:600">Đang có buổi tập${sk ? ' · ' + esc(sk.name) : ''}</div><div class="small muted num" data-live-clock>${H.fmtClock(elapsedMs(a))}</div></div><button class="btn ok sm">Tiếp tục</button></div></div>`;
     }
     if (!skills.length) {
-      return html + `<div class="card">${empty('target', 'Bắt đầu với kỹ năng đầu tiên', 'Chọn một mẫu có sẵn hoặc tự tạo. App sẽ tự chia thời gian luyện tập mỗi ngày cho các kỹ năng.',
-        `<div class="chips" style="justify-content:center">${Object.entries(H.TEMPLATES).map(([k, t]) => `<button class="btn soft" data-act="useTemplate" data-k="${k}">${typeIcon(k)} ${esc(t.name)}</button>`).join('')}<button class="btn primary" data-act="newSkill">${I('plus')} Tự tạo</button></div>`)}</div>`;
+      return html + `<div class="card">${empty('target', 'Chưa có kỹ năng', '', `<button class="btn primary" data-act="newSkill">${I('plus')} Thêm kỹ năng</button>`)}</div>`;
     }
     const pct = Math.min(mins / (st.dailyMin || 120), 1);
+    const notes = V.nextNotes();
     html += `<div class="grid bento">
       <div class="card span-5"><div class="hero">${C.ring(mins, st.dailyMin, { size: 116, label: H.fmtMinShort(mins), sub: `/ ${H.fmtMinShort(st.dailyMin)}`, color: pct >= 1 ? 'var(--ok)' : 'var(--accent)' })}
         <div class="stack" style="gap:10px;flex:1">
@@ -39,15 +39,15 @@
           <div class="stats-row"><div class="stat"><span class="v num">${streak}</span><span class="k">chuỗi ngày</span></div><div class="stat"><span class="v num">${cardsDue}</span><span class="k">thẻ đến hạn</span></div><div class="stat"><span class="v num">${revDue}</span><span class="k">cần ôn</span></div></div>
         </div></div></div>
       <div class="card span-7"><div class="card-head"><h2>${I('plan')} Kế hoạch hôm nay</h2><span class="chip num">${H.fmtMinShort(plan.planned || 0)}</span></div>${V.planBlocks(plan)}</div>
-      <div class="card span-7">${V.nextNotes()}</div>
-      <div class="span-5 stack">${V.skillMini(skills)}${V.topErrors()}</div>
+      ${notes}
+      <div class="${notes ? 'span-5' : 'span-12'} stack">${V.skillMini(skills)}${V.topErrors()}</div>
     </div>`;
     return html;
   };
   V.planBlocks = (plan) => {
-    if (plan.isRest) return `<div class="note acc">Hôm nay là ngày nghỉ. Nghỉ ngơi cũng là một phần của luyện tập.</div>${plan.blocks.length ? '<div style="height:10px"></div>' : ''}` + plan.blocks.map(V.blockRow).join('');
-    if (!plan.blocks.length) return `<div class="note">Không có khối nào. Hãy thêm kỹ năng con cho các kỹ năng.</div>`;
-    return plan.blocks.map((b, i) => (i ? `<div class="break-line">nghỉ 5–10 phút</div>` : '') + V.blockRow(b)).join('');
+    if (plan.isRest) return `<div class="note acc">Ngày nghỉ</div>${plan.blocks.length ? '<div style="height:10px"></div>' : ''}` + plan.blocks.map(V.blockRow).join('');
+    if (!plan.blocks.length) return `<div class="note">Chưa có khối nào.</div>`;
+    return plan.blocks.map((b, i) => V.blockRow(b)).join('');
   };
   V.blockRow = (b) => {
     const color = b.color || (b.kind === 'cards' ? '#6A6B70' : b.kind === 'review' ? 'var(--warn)' : b.kind === 'bench' ? 'var(--ok)' : 'var(--accent)');
@@ -59,7 +59,8 @@
   };
   V.nextNotes = () => {
     const items = H.skills().map(s => { const last = H.sessionsOfSkill(s.id).find(x => x.nextTime); return last ? { s, last } : null; }).filter(Boolean);
-    return `<div class="card-head"><h2>${I('flag')} Lần trước bạn tự dặn</h2></div>` + (items.length ? `<div class="list">${items.map(({ s, last }) => `<div class="li"><span class="dot" style="background:${s.color}"></span><div class="grow"><div class="title small">${esc(last.nextTime)}</div><div class="sub">${esc(s.name)}${last.subId && S.get(last.subId) ? ' · ' + esc(S.get(last.subId).name) : ''} · ${H.fmtDay(last.day)}</div></div></div>`).join('')}</div>` : `<p class="small muted">Sau mỗi buổi tập, ghi một điều cần chỉnh cho lần sau. Những ghi chú đó sẽ hiện ở đây để buổi tập tiếp theo bắt đầu đúng chỗ.</p>`);
+    if (!items.length) return '';
+    return `<div class="card span-7"><div class="card-head"><h2>${I('flag')} Lần trước tự dặn</h2></div>` + (`<div class="list">${items.map(({ s, last }) => `<div class="li"><span class="dot" style="background:${s.color}"></span><div class="grow"><div class="title small">${esc(last.nextTime)}</div><div class="sub">${esc(s.name)}${last.subId && S.get(last.subId) ? ' · ' + esc(S.get(last.subId).name) : ''} · ${H.fmtDay(last.day)}</div></div></div>`).join('')}</div></div>`);
   };
   V.skillMini = (skills) => `<div class="card"><div class="card-head"><h2>${I('skills')} Kỹ năng</h2><button class="btn ghost sm" data-act="nav" data-to="#/skills">Xem tất cả</button></div><div class="stack" style="gap:14px">${skills.map(s => { const l = H.skillLevel(s.id); return `<div class="click" data-act="nav" data-to="#/skill/${s.id}" style="cursor:pointer"><div class="row" style="margin-bottom:6px"><span class="dot" style="background:${s.color}"></span><span style="font-weight:600;flex:1">${esc(s.name)}</span><span class="small muted num">${l.toFixed(1)}/5</span></div><div class="bar" style="--c:${s.color}"><span style="width:${l / 5 * 100}%"></span></div></div>`; }).join('')}</div></div>`;
   V.topErrors = () => {
@@ -79,7 +80,7 @@
   V.skills = () => {
     const skills = H.skills(); const arch = S.all('skill').filter(s => s.archived);
     let html = `<div class="page-head"><div><div class="eyebrow">${skills.length} kỹ năng đang học</div><h1>Kỹ năng</h1></div><div class="head-actions"><button class="btn primary" data-act="newSkill">${I('plus')} <span>Thêm</span></button></div></div>`;
-    if (!skills.length) html += `<div class="card">${empty('skills', 'Chưa có kỹ năng nào', 'Tạo kỹ năng từ mẫu có sẵn hoặc tự tạo.', `<button class="btn primary" data-act="newSkill">${I('plus')} Thêm kỹ năng</button>`)}</div>`;
+    if (!skills.length) html += `<div class="card">${empty('skills', 'Chưa có kỹ năng', '', `<button class="btn primary" data-act="newSkill">${I('plus')} Thêm kỹ năng</button>`)}</div>`;
     html += `<div class="grid g2 g3">${skills.map(s => {
       const subs = H.subsOf(s.id); const l = H.skillLevel(s.id); const due = subs.filter(x => x.review && x.review.due <= H.today()).length;
       const next = H.pickSub(s.id); const m7 = H.sum(H.sessionsOfSkill(s.id).filter(x => x.day > H.addDays(H.today(), -7)).map(x => x.minutes));
@@ -91,37 +92,24 @@
     return html;
   };
 
-  A.useTemplate = (el) => {
-    const t = H.TEMPLATES[el.dataset.k];
-    const sk = H.createSkillFromSpec(JSON.parse(JSON.stringify(t)));
-    H.closeSheet(); H.toast(`Đã tạo "${sk.name}". Hãy chấm mức hiện tại cho từng kỹ năng con.`); go('#/skill/' + sk.id);
-  };
-  A.newSkill = () => {
-    const has = new Set(H.skills().map(s => s.type));
-    H.openSheet(`<div class="sheet-head"><h2>Thêm kỹ năng</h2><button class="icon-btn" data-act="closeSheet">${I('x')}</button></div>
-      <div class="lbl" style="margin-bottom:8px">Dùng mẫu có sẵn</div>
-      <div class="stack" style="gap:8px">${Object.entries(H.TEMPLATES).map(([k, t]) => `<button class="sub-item" style="width:100%;text-align:left" data-act="useTemplate" data-k="${k}"><div class="skill-ico" style="--c:${t.color};--cs:${H.soft(t.color)}">${typeIcon(k)}</div><div style="flex:1"><div style="font-weight:600">${esc(t.name)}${has.has(k) ? ' <span class="chip xs">đã có</span>' : ''}</div><div class="small muted">${t.subs.length} kỹ năng con · ${t.benches.length} test mốc</div></div>${I('chev')}</button>`).join('')}</div>
-      <div class="divider"></div>
-      <button class="btn primary block" data-act="blankSkillForm">${I('plus')} Tự tạo kỹ năng mới</button><p class="xs muted" style="margin-top:8px">Mẫu Thể thao là khung chung. Với môn cụ thể (cầu lông, chạy bộ, bơi…), hãy tự tạo và ghi các kỹ năng con của môn đó.</p>`);
-  };
+  A.newSkill = () => A.editSkill(null);
   A.closeSheet = () => H.closeSheet();
 
   const typeSeg = (sel) => `<div class="seg" data-seg="type">${Object.entries(H.TYPES).map(([k, t]) => `<button type="button" data-v="${k}" class="${k === sel ? 'sel' : ''}">${t.label}</button>`).join('')}</div>`;
   const segVal = (root, name) => root.querySelector(`[data-seg="${name}"] .sel`)?.dataset.v;
-  A.blankSkillForm = () => A.editSkill(null);
 
   A.editSkill = (el) => {
     const s = el && el.dataset ? S.get(el.dataset.id) : null;
     const used = new Set(H.skills().map(x => x.color));
     const color = s ? s.color : (H.COLORS.find(c => !used.has(c.c)) || H.COLORS[0]).c;
-    H.openSheet(`<div class="sheet-head"><h2>${s ? 'Sửa kỹ năng' : 'Tự tạo kỹ năng'}</h2><button class="icon-btn" data-act="closeSheet">${I('x')}</button></div>
+    H.openSheet(`<div class="sheet-head"><h2>${s ? 'Sửa kỹ năng' : 'Thêm kỹ năng'}</h2><button class="icon-btn" data-act="closeSheet">${I('x')}</button></div>
       <div class="form" data-id="${s ? s.id : ''}">
         <div class="field"><label>Tên kỹ năng</label><input class="input" name="name" value="${esc(s?.name || '')}"></div>
         <div class="field"><label>Nhóm</label>${typeSeg(s?.type || 'other')}</div>
         <div class="field"><label>Màu</label><div class="chips" data-seg="color">${H.COLORS.map(c => `<button type="button" class="chip ${c.c === color ? 'sel' : ''}" data-v="${c.c}" style="width:40px;padding:0;justify-content:center" aria-label="Màu ${c.c}"><span class="dot" style="background:${c.c};width:18px;height:18px"></span></button>`).join('')}</div></div>
-        <div class="field"><label>Thế nào là thuần thục? (đo được)</label><textarea class="input" name="goal">${esc(s?.goal || '')}</textarea></div>
+        <div class="field"><label>Mục tiêu thuần thục</label><textarea class="input" name="goal">${esc(s?.goal || '')}</textarea></div>
         <div class="two"><div class="field"><label>Phút/ngày</label><input class="input" type="number" name="dailyMin" min="5" step="5" value="${s?.dailyMin || 30}"></div><div class="field"><label>Ngày mục tiêu</label><input class="input" type="date" name="targetDate" value="${esc(s?.targetDate || '')}"></div></div>
-        ${s ? '' : `<div class="field"><label>Kỹ năng con (mỗi dòng một kỹ năng)</label><textarea class="input" name="subs" rows="5" placeholder="VD cầu lông:&#10;Bộ chân&#10;Phông cầu cao sâu&#10;Đập cầu&#10;Bỏ nhỏ lưới&#10;Đánh đôi: chiến thuật"></textarea><span class="hint">Chia thành 5–8 phần nhỏ, tập riêng từng phần. Thêm/sửa sau cũng được.</span></div>`}
+        ${s ? '' : `<div class="field"><label>Kỹ năng con (mỗi dòng một)</label><textarea class="input" name="subs" rows="5"></textarea></div>`}
       </div>
       <div class="sheet-foot">${s ? `<button class="btn danger" data-act="archiveSkill" data-id="${s.id}">${s.archived ? 'Bỏ lưu trữ' : 'Lưu trữ'}</button>` : ''}<button class="btn primary" data-act="saveSkill">${I('check')} Lưu</button></div>
       ${s ? `<button class="btn ghost danger block" style="margin-top:10px" data-act="deleteSkill" data-id="${s.id}">${I('trash')} Xóa kỹ năng và toàn bộ dữ liệu</button>` : ''}`);
@@ -152,7 +140,7 @@
     <div class="page-head"><div class="row" style="gap:14px"><div class="skill-ico" style="--c:${s.color};--cs:${H.soft(s.color)};width:48px;height:48px">${typeIcon(s.type)}</div><div><div class="eyebrow">${H.TYPES[s.type]?.label || ''}${s.archived ? ' · đã lưu trữ' : ''}</div><h1>${esc(s.name)}</h1></div></div>
       <div class="head-actions"><button class="icon-btn" data-act="editSkill" data-id="${s.id}" aria-label="Sửa">${I('edit')}</button><button class="btn primary" data-act="practiceSkill" data-id="${s.id}">${I('play')} <span>Tập</span></button></div></div>
     <div class="grid bento" style="margin-bottom:16px">
-      <div class="card span-8"><div class="lbl" style="margin-bottom:6px">Thuần thục là</div><p>${esc(s.goal || 'Chưa đặt. Bấm nút sửa để định nghĩa mức thuần thục đo được.')}</p>
+      <div class="card span-8"><div class="lbl" style="margin-bottom:6px">Thuần thục là</div><p>${esc(s.goal || '—')}</p>
         <div class="row wrap" style="margin-top:12px;gap:6px"><span class="chip num">${s.dailyMin} phút/ngày</span><span class="chip num">Đã tập ${H.fmtMin(totalMin)}</span>${daysLeft !== null ? `<span class="chip ${daysLeft < 0 ? 'bad' : 'acc'} num">${daysLeft >= 0 ? `Còn ${daysLeft} ngày` : `Quá hạn ${-daysLeft} ngày`}</span>` : ''}</div></div>
       <div class="card span-4"><div class="row">${C.ring(l, 5, { size: 84, stroke: 9, color: s.color, label: l.toFixed(1), sub: '/5' })}<div style="flex:1"><div class="small muted">Mức trung bình</div>${next ? `<div class="small" style="margin-top:6px">Nên tập tiếp: <b>${esc(next.name)}</b></div>` : ''}</div></div></div>
     </div>
@@ -162,8 +150,8 @@
       html += subs.length ? subs.map(x => {
         const due = x.review && x.review.due <= H.today();
         return `<div class="sub-item" data-act="editSub" data-id="${x.id}"><div style="flex:1;min-width:0"><div class="row" style="gap:8px"><span style="font-weight:600" class="trunc">${esc(x.name)}</span>${next && next.id === x.id ? `<span class="chip acc xs">Nên tập</span>` : ''}${due ? `<span class="chip warn xs">Cần ôn</span>` : ''}</div><div class="small muted trunc">${esc(H.LEVELS[x.level || 0])}${x.lastPracticed ? ' · tập ' + H.fmtDayL(x.lastPracticed) : ''}</div></div>${lvlMeter(x.level || 0, s.color)}</div>`;
-      }).join('') : empty('target', 'Chưa có kỹ năng con', 'Chia kỹ năng thành 5–8 phần nhỏ để tập riêng từng phần.');
-      html += `<p class="xs muted" style="margin-top:12px">Thang mức: ${H.LEVELS.map((t, i) => `${i} = ${t}`).join(' · ')}</p></div>`;
+      }).join('') : empty('target', 'Chưa có kỹ năng con', '');
+      html += `</div>`;
     }
     if (tab === 'bench') {
       const bs = S.all('benchmark').filter(b => b.skillId === id);
@@ -176,18 +164,18 @@
           ${C.line(rs.map(r => ({ x: r.date, y: r.value })), { color: s.color, height: 140 })}
           ${b.howTo ? `<p class="small muted" style="margin-top:8px">${esc(b.howTo)}</p>` : ''}
           <div class="row" style="margin-top:12px"><button class="btn sm primary" data-act="addBenchResult" data-id="${b.id}">${I('plus')} Ghi kết quả</button><button class="btn sm" data-act="nav" data-to="#/practice?type=benchmark&skill=${id}&bench=${b.id}&min=15">${I('clock')} Đo có bấm giờ</button></div></div>`;
-      }).join('') : `<div class="card">${empty('flag', 'Chưa có bài test mốc', 'Test mốc giúp đo tiến bộ thật sau mỗi 2 tuần.')}</div>`;
+      }).join('') : `<div class="card">${empty('flag', 'Chưa có test mốc', '')}</div>`;
       html += `</div>`;
     }
     if (tab === 'errors') {
       const errs = H.errorLog(id);
-      html += `<div class="card"><div class="card-head"><h2>${I('bug')} Nhật ký lỗi</h2></div>${errs.length ? `<div class="list">${errs.map(e => `<div class="li"><span class="chip ${e.n >= 3 ? 'bad' : e.n === 2 ? 'warn' : ''} num">${e.n}×</span><div class="grow"><div class="title small">${esc(e.text)}</div><div class="sub">${e.sub && S.get(e.sub) ? esc(S.get(e.sub).name) + ' · ' : ''}gần nhất ${H.fmtDayL(e.last)}</div></div></div>`).join('')}</div><p class="xs muted" style="margin-top:10px">Lỗi lặp từ 3 lần trở lên nên được đặt làm mục tiêu của buổi tập tới.</p>` : empty('bug', 'Chưa ghi lỗi nào', 'Ghi lỗi trong và sau mỗi buổi tập để biết cần sửa gì.')}</div>`;
+      html += `<div class="card"><div class="card-head"><h2>${I('bug')} Nhật ký lỗi</h2></div>${errs.length ? `<div class="list">${errs.map(e => `<div class="li"><span class="chip ${e.n >= 3 ? 'bad' : e.n === 2 ? 'warn' : ''} num">${e.n}×</span><div class="grow"><div class="title small">${esc(e.text)}</div><div class="sub">${e.sub && S.get(e.sub) ? esc(S.get(e.sub).name) + ' · ' : ''}gần nhất ${H.fmtDayL(e.last)}</div></div></div>`).join('')}</div>` : empty('bug', 'Chưa ghi lỗi nào', '')}</div>`;
     }
     if (tab === 'history') html += `<div class="card">${V.sessionList(H.sessionsOfSkill(id), 60)}</div>`;
     return html;
   };
   V.sessionList = (list, max = 30) => {
-    if (!list.length) return empty('clock', 'Chưa có buổi tập', 'Các buổi tập sẽ hiện ở đây.');
+    if (!list.length) return empty('clock', 'Chưa có buổi tập', '');
     const typeLb = { deliberate: 'Có chủ đích', review: 'Ôn xen kẽ', benchmark: 'Test mốc', cards: 'Thẻ' };
     return `<div class="list">${list.slice(0, max).map(x => { const sub = x.subId && S.get(x.subId); const rate = x.attempts ? x.success / x.attempts : null; return `<div class="li"><div class="grow"><div class="title small">${esc(x.goal || sub?.name || typeLb[x.type])}</div><div class="sub">${H.fmtDay(x.day)} · ${typeLb[x.type] || ''}${sub ? ' · ' + esc(sub.name) : ''}${x.focus ? ' · tập trung ' + x.focus + '/5' : ''}${x.rpe ? ' · RPE ' + x.rpe : ''}</div>${x.mainError ? `<div class="sub" style="color:var(--bad)">Lỗi: ${esc(x.mainError)}</div>` : ''}</div><div style="text-align:right"><div class="num" style="font-weight:600">${H.fmtMinShort(x.minutes)}</div>${rate !== null ? `<div class="xs num ${rate < .6 ? '' : ''}" style="color:${rate < .6 ? 'var(--bad)' : rate <= .85 ? 'var(--ok)' : 'var(--warn)'}">${x.success}/${x.attempts}</div>` : ''}</div><button class="icon-btn" style="width:34px;height:34px" data-act="delSession" data-id="${x.id}" aria-label="Xóa">${I('trash', 'xs')}</button></div>`; }).join('')}</div>`;
   };
@@ -205,8 +193,8 @@
         <div class="field"><label>Mức hiện tại</label><div class="lvl-pick" data-seg="lvl">${[0, 1, 2, 3, 4, 5].map(i => `<button type="button" data-v="${i}" class="${i === lvl ? 'sel' : ''}">${i}</button>`).join('')}</div><div class="hint" data-lvl-desc>${esc(H.LEVELS[lvl])}</div></div>
         <div class="field"><label>Độ quan trọng</label><div class="seg" data-seg="imp">${[[1, 'Thấp'], [2, 'Vừa'], [3, 'Cao']].map(([v, t]) => `<button type="button" data-v="${v}" class="${(x?.importance || 2) === v ? 'sel' : ''}">${t}</button>`).join('')}</div></div>
         <div class="field"><label>Bài tập gợi ý (mỗi dòng một bài)</label><textarea class="input" name="drills" rows="3">${esc((x?.drills || []).join('\n'))}</textarea></div>
-        <div class="field"><label>Mẫu chuẩn để so sánh</label><textarea class="input" name="model" rows="2" placeholder="Link video chuyên gia, code mẫu, kế hoạch mẫu...">${esc(x?.model || '')}</textarea></div>
-        ${x && x.review ? `<div class="note ${x.review.due <= H.today() ? 'warn' : ''} small">Lịch ôn: bước ${x.review.stage + 1}/${H.REVIEW_STEPS.length}, ôn lại vào ${H.fmtDayL(x.review.due)}.</div>` : x && (x.level || 0) < 3 ? `<div class="note small">Khi đạt mức 3 trở lên, kỹ năng con sẽ được hẹn ôn lại sau 1, 3, 7, 14, 30 rồi 60 ngày.</div>` : ''}
+        <div class="field"><label>Mẫu chuẩn để so sánh</label><textarea class="input" name="model" rows="2">${esc(x?.model || '')}</textarea></div>
+        ${x && x.review ? `<div class="note ${x.review.due <= H.today() ? 'warn' : ''} small">Lịch ôn: bước ${x.review.stage + 1}/${H.REVIEW_STEPS.length}, ôn lại vào ${H.fmtDayL(x.review.due)}.</div>` : ''}
         ${x && (x.levelHistory || []).length > 1 ? `<div><div class="lbl" style="margin-bottom:4px">Tiến trình mức</div>${C.sparkLevels(x, s.color)}</div>` : ''}
       </div>
       <div class="sheet-foot">${x ? `<button class="btn danger" data-act="delSub" data-id="${x.id}" aria-label="Xóa">${I('trash')}</button><button class="btn" data-act="practiceSub" data-id="${x.id}">${I('play')} Tập</button>` : ''}<button class="btn primary" data-act="saveSub">${I('check')} Lưu</button></div>`,
@@ -261,7 +249,7 @@
   V.practice = (q) => {
     if (active()) return V.session();
     const skills = H.skills();
-    if (!skills.length) return `<div class="card">${empty('target', 'Chưa có kỹ năng', 'Tạo kỹ năng trước khi tập.', `<button class="btn primary" data-act="newSkill">${I('plus')} Thêm kỹ năng</button>`)}</div>`;
+    if (!skills.length) return `<div class="card">${empty('target', 'Chưa có kỹ năng', '', `<button class="btn primary" data-act="newSkill">${I('plus')} Thêm kỹ năng</button>`)}</div>`;
     const type = q.get('type') || 'deliberate';
     const skillId = q.get('skill') && S.get(q.get('skill')) ? q.get('skill') : skills[0].id;
     const s = S.get(skillId);
@@ -271,29 +259,29 @@
     const min = +(q.get('min') || (type === 'review' ? 15 : type === 'benchmark' ? 15 : 30));
     const P = (o) => { const n = new URLSearchParams(q); Object.entries(o).forEach(([k, v]) => v === null ? n.delete(k) : n.set(k, v)); return '#/practice?' + n.toString(); };
     const last = sub ? H.sessionsOfSub(sub.id).find(x => x.nextTime || x.mainError) : null;
-    let html = `<div class="page-head"><div><div class="eyebrow">Chuẩn bị buổi tập</div><h1>Tập</h1></div><div class="head-actions"><button class="btn" data-act="logManual">${I('edit')} <span>Ghi buổi đã tập</span></button></div></div>
+    let html = `<div class="page-head"><div><h1>Tập</h1></div><div class="head-actions"><button class="btn" data-act="logManual">${I('edit')} <span>Ghi buổi đã tập</span></button></div></div>
     <div class="session">
       <div class="seg">${[['deliberate', 'Có chủ đích'], ['review', 'Ôn xen kẽ'], ['benchmark', 'Test mốc']].map(([k, t]) => `<button class="${k === type ? 'sel' : ''}" data-act="nav" data-to="${P({ type: k, min: null })}">${t}</button>`).join('')}</div>`;
     if (type !== 'review') html += `<div class="card"><div class="lbl" style="margin-bottom:8px">Kỹ năng</div><div class="chips">${skills.map(x => `<button class="chip ${x.id === skillId ? 'sel' : ''}" data-act="nav" data-to="${P({ skill: x.id, sub: null, bench: null })}"><span class="dot" style="background:${x.color}"></span>${esc(x.name)}</button>`).join('')}</div></div>`;
 
     if (type === 'deliberate') {
-      html += `<div class="card"><div class="lbl" style="margin-bottom:8px">Kỹ năng con</div>${subs.length ? `<select class="input" data-change="pickSub">${subs.map(x => `<option value="${x.id}" ${x.id === subId ? 'selected' : ''}>${esc(x.name)} · mức ${x.level || 0}/5${H.pickSub(skillId)?.id === x.id ? ' · nên tập' : ''}</option>`).join('')}</select>` : `<div class="note">Kỹ năng này chưa có kỹ năng con. <a href="#/skill/${skillId}">Thêm ngay</a></div>`}
+      html += `<div class="card"><div class="lbl" style="margin-bottom:8px">Kỹ năng con</div>${subs.length ? `<select class="input" data-change="pickSub">${subs.map(x => `<option value="${x.id}" ${x.id === subId ? 'selected' : ''}>${esc(x.name)} · mức ${x.level || 0}/5${H.pickSub(skillId)?.id === x.id ? ' · nên tập' : ''}</option>`).join('')}</select>` : `<div class="note">Chưa có kỹ năng con · <a href="#/skill/${skillId}">Thêm</a></div>`}
         ${sub && sub.model ? `<div class="note small" style="margin-top:10px">${I('book', 'xs')} <b>Mẫu chuẩn:</b> ${esc(sub.model)}</div>` : ''}
         ${last ? `<div class="note acc small" style="margin-top:10px">${I('flag', 'xs')} <b>Lần trước (${H.fmtDayL(last.day)}):</b> ${last.nextTime ? esc(last.nextTime) : ''}${last.mainError ? ` · lỗi chính: ${esc(last.mainError)}` : ''}</div>` : ''}</div>`;
-      html += `<div class="card"><div class="card-head"><h3>Mục tiêu duy nhất của buổi này</h3></div>
-        <textarea class="input" id="goal" placeholder="Cụ thể và đo được. VD: Ước lượng 5 việc, sai số mỗi việc ≤ 20%">${esc(q.get('goal') || '')}</textarea>
+      html += `<div class="card"><div class="card-head"><h3>Mục tiêu buổi này</h3></div>
+        <textarea class="input" id="goal">${esc(q.get('goal') || '')}</textarea>
         ${V.goalSuggestions(sub)}</div>`;
     }
     if (type === 'review') {
       const due = H.dueReviews(); const pool = due.length ? due : [];
       html += `<div class="card"><div class="card-head"><h3>${I('repeat')} Kỹ năng con đến hạn ôn</h3><span class="chip">${pool.length}</span></div>
-        ${pool.length ? `<p class="small muted" style="margin-bottom:10px">Ôn xen kẽ: luân phiên từng kỹ năng con, mỗi lượt vài phút, không ôn dồn một cái.</p><div class="stack" style="gap:6px">${pool.map(x => { const sk = S.get(x.skillId); return `<label class="sub-item"><input type="checkbox" checked data-review="${x.id}" style="width:20px;height:20px"><div style="flex:1"><div style="font-weight:600" class="small">${esc(x.name)}</div><div class="xs muted">${esc(sk.name)} · mức ${x.level}/5</div></div>${lvlMeter(x.level, sk.color)}</label>`; }).join('')}</div>` : `<div class="note ok">Không có kỹ năng con nào đến hạn ôn. Bạn có thể ôn thẻ hoặc tập có chủ đích.</div>`}</div>`;
+        ${pool.length ? `<div class="stack" style="gap:6px">${pool.map(x => { const sk = S.get(x.skillId); return `<label class="sub-item"><input type="checkbox" checked data-review="${x.id}" style="width:20px;height:20px"><div style="flex:1"><div style="font-weight:600" class="small">${esc(x.name)}</div><div class="xs muted">${esc(sk.name)} · mức ${x.level}/5</div></div>${lvlMeter(x.level, sk.color)}</label>`; }).join('')}</div>` : `<div class="note ok">Không có kỹ năng con đến hạn ôn.</div>`}</div>`;
     }
     if (type === 'benchmark') {
       const bs = S.all('benchmark').filter(b => b.skillId === skillId);
       const bid = q.get('bench') && S.get(q.get('bench')) ? q.get('bench') : bs[0]?.id;
       const b = bid ? S.get(bid) : null;
-      html += `<div class="card"><div class="lbl" style="margin-bottom:8px">Bài test</div>${bs.length ? `<div class="chips">${bs.map(x => `<button class="chip ${x.id === bid ? 'sel' : ''}" data-act="nav" data-to="${P({ bench: x.id })}">${esc(x.name)}</button>`).join('')}</div>${b && b.howTo ? `<div class="note small" style="margin-top:10px">${esc(b.howTo)}</div>` : ''}` : `<div class="note">Chưa có test mốc. <a href="#/skill/${skillId}?tab=bench">Thêm ngay</a></div>`}</div>`;
+      html += `<div class="card"><div class="lbl" style="margin-bottom:8px">Bài test</div>${bs.length ? `<div class="chips">${bs.map(x => `<button class="chip ${x.id === bid ? 'sel' : ''}" data-act="nav" data-to="${P({ bench: x.id })}">${esc(x.name)}</button>`).join('')}</div>${b && b.howTo ? `<div class="note small" style="margin-top:10px">${esc(b.howTo)}</div>` : ''}` : `<div class="note">Chưa có test mốc · <a href="#/skill/${skillId}?tab=bench">Thêm</a></div>`}</div>`;
     }
     html += `<div class="card"><div class="lbl" style="margin-bottom:8px">Thời lượng</div><div class="chips">${[10, 15, 25, 30, 45, 60, 90].map(m => `<button class="chip ${m === min ? 'sel' : ''}" data-act="nav" data-to="${P({ min: m, goal: null })}" data-keepgoal>${m} phút</button>`).join('')}</div></div>
       <button class="btn primary lg block" data-act="startSession" data-type="${type}" data-skill="${skillId}" data-sub="${subId || ''}" data-min="${min}" data-bench="${q.get('bench') || ''}">${I('play')} Bắt đầu ${min} phút</button>
@@ -314,8 +302,8 @@
     if (lastDel) { const r = lastDel.success / lastDel.attempts; const z = H.zone(r, lastDel.attempts); const pre = z.key === 'easy' ? 'Khó hơn: ' : z.key === 'hard' ? 'Chia nhỏ hơn: ' : 'Lặp lại: '; items.push({ tag: `Buổi trước ${H.pct(r)}`, t: pre + lastDel.goal.replace(/^(Khó hơn|Chia nhỏ hơn|Lặp lại): /, ''), cls: z.cls }); }
     (sub.drills || []).forEach(d => items.push({ tag: 'Bài tập', t: d, cls: '' }));
     const seen = new Set(); const uniq = items.filter(x => !seen.has(x.t) && seen.add(x.t));
-    if (!uniq.length) return `<p class="xs muted" style="margin-top:8px">Mẹo: ghi rõ số lần thử và tiêu chí đạt, ví dụ "10 lần, đạt khi …".</p>`;
-    return `<div class="lbl" style="margin:12px 0 8px">Gợi ý (chạm để chọn)</div><div class="stack" style="gap:6px">${uniq.slice(0, 6).map(x => `<button class="sub-item sugg" data-act="pickDrill" data-t="${esc(x.t)}"><span class="chip xs ${x.cls}">${esc(x.tag)}</span><span class="small" style="flex:1">${esc(x.t)}</span></button>`).join('')}</div>`;
+    if (!uniq.length) return '';
+    return `<div class="lbl" style="margin:12px 0 8px">Gợi ý</div><div class="stack" style="gap:6px">${uniq.slice(0, 6).map(x => `<button class="sub-item sugg" data-act="pickDrill" data-t="${esc(x.t)}"><span class="chip xs ${x.cls}">${esc(x.tag)}</span><span class="small" style="flex:1">${esc(x.t)}</span></button>`).join('')}</div>`;
   };
   A.pickDrill = el => { const g = document.getElementById('goal'); g.value = el.dataset.t; g.focus(); };
   A.startSession = el => {
@@ -324,7 +312,7 @@
     let reviewSubs = [];
     if (type === 'review') { reviewSubs = [...document.querySelectorAll('[data-review]:checked')].map(c => c.dataset.review); if (!reviewSubs.length) return H.toast('Chọn ít nhất 1 kỹ năng con để ôn'); goal = 'Ôn xen kẽ: ' + reviewSubs.map(id => S.get(id).name).join(' → '); }
     if (type === 'deliberate' && !el.dataset.sub) return H.toast('Cần chọn kỹ năng con');
-    if (type === 'deliberate' && !goal) { goalEl.focus(); return H.toast('Ghi một mục tiêu cụ thể cho buổi tập nhé'); }
+    if (type === 'deliberate' && !goal) { goalEl.focus(); return H.toast('Nhập mục tiêu'); }
     if (type === 'benchmark') { const b = S.get(el.dataset.bench) || S.all('benchmark').find(x => x.skillId === el.dataset.skill); if (!b) return H.toast('Chưa có bài test mốc'); el.dataset.bench = b.id; goal = 'Test mốc: ' + b.name; }
     const skillId = type === 'review' ? S.get(reviewSubs[0]).skillId : el.dataset.skill;
     S.local.active = { type, skillId, subId: type === 'deliberate' ? el.dataset.sub : null, benchId: el.dataset.bench || null, reviewSubs, goal, plannedMin: +el.dataset.min, startTs: Date.now(), pausedAt: null, pausedTotal: 0, attempts: 0, success: 0, errors: [], alerted: false };
@@ -340,15 +328,13 @@
     return `<div class="session">
       <div class="row"><div style="flex:1;min-width:0"><div class="eyebrow small muted">${{ deliberate: 'Luyện tập có chủ đích', review: 'Ôn xen kẽ', benchmark: 'Test mốc' }[a.type]}</div><h2 class="trunc">${s ? esc(s.name) : ''}${sub ? ' · ' + esc(sub.name) : ''}</h2></div>${s ? skillChip(s) : ''}</div>
       <div class="goal-box">${I('target', 'xs')} ${esc(a.goal)}</div>
-      <div class="card"><div class="timer-wrap"><div class="timer num" data-timer style="color:${left < 0 ? 'var(--ok)' : 'var(--ink)'}">${H.fmtClock(left)}</div><div class="small muted num" data-timer-sub>${left < 0 ? 'Đã đủ thời gian · bấm Kết thúc khi xong' : `Đã tập ${H.fmtClock(elapsedMs(a))} / ${a.plannedMin} phút`}</div>
+      <div class="card"><div class="timer-wrap"><div class="timer num" data-timer style="color:${left < 0 ? 'var(--ok)' : 'var(--ink)'}">${H.fmtClock(left)}</div><div class="small muted num" data-timer-sub>${left < 0 ? 'Đã đủ thời gian' : `Đã tập ${H.fmtClock(elapsedMs(a))} / ${a.plannedMin} phút`}</div>
         <div class="row"><button class="btn" data-act="pauseSession">${a.pausedAt ? I('play') + ' Tiếp tục' : I('pause') + ' Tạm dừng'}</button><button class="btn ok" data-act="finishSession">${I('stop')} Kết thúc</button></div></div></div>
-      ${a.type !== 'benchmark' ? `<div class="counter"><button class="yes" data-act="hit" data-ok="1">${I('check')} Đạt<small class="num">${a.success} lần · phím Space</small></button><button class="no" data-act="hit" data-ok="0">${I('x')} Trượt<small class="num">${a.attempts - a.success} lần · phím X</small></button></div>
+      ${a.type !== 'benchmark' ? `<div class="counter"><button class="yes" data-act="hit" data-ok="1">${I('check')} Đạt<small class="num">${a.success} lần</small></button><button class="no" data-act="hit" data-ok="0">${I('x')} Trượt<small class="num">${a.attempts - a.success} lần</small></button></div>
       <div class="card"><div class="row" style="margin-bottom:10px"><span style="font-weight:600">Tỉ lệ đạt</span><span class="num" style="font-weight:700">${a.attempts ? H.pct(rate) : '—'}</span><span class="spacer"></span><span class="chip ${z.cls}">${z.label}</span></div>
         <div class="zone"><i></i><i></i><i></i>${a.attempts ? `<span class="pin" style="left:${rate * 100}%"></span>` : ''}</div><div class="zone-legend"><span>&lt;60% quá khó</span><span>60–85% vừa sức</span><span>&gt;85%</span></div>
-        ${a.attempts >= 5 && z.key === 'hard' ? `<div class="note bad small" style="margin-top:10px">Bạn đang trượt nhiều. Hãy làm chậm lại, chia động tác/bài nhỏ hơn, hoặc giảm độ khó một bậc.</div>` : ''}
-        ${a.attempts >= 5 && z.key === 'easy' ? `<div class="note warn small" style="margin-top:10px">Quá dễ, bạn đang ở vùng thoải mái. Hãy tăng tốc độ, thêm ràng buộc hoặc chọn bài khó hơn.</div>` : ''}
         ${a.attempts ? `<button class="btn ghost sm" style="margin-top:6px" data-act="undoHit">${I('back', 'xs')} Hoàn tác lần cuối</button>` : ''}</div>` : ''}
-      <div class="card"><div class="card-head"><h3>${I('bug')} Ghi lỗi nhanh</h3></div><div class="row"><input class="input" id="err-in" placeholder="VD: quên kiểm tra trường hợp rỗng" enterkeyhint="done"><button class="btn" data-act="addErr">${I('plus')}</button></div>
+      <div class="card"><div class="card-head"><h3>${I('bug')} Ghi lỗi</h3></div><div class="row"><input class="input" id="err-in" enterkeyhint="done"><button class="btn" data-act="addErr">${I('plus')}</button></div>
         ${a.errors.length ? `<div class="chips" style="margin-top:10px">${a.errors.map((e, i) => `<span class="chip bad">${esc(e)} <button style="border:0;background:none;color:inherit;cursor:pointer;padding:0" data-act="rmErr" data-i="${i}" aria-label="Xóa">×</button></span>`).join('')}</div>` : ''}</div>
       ${sub && sub.model ? `<div class="note small">${I('book', 'xs')} <b>Mẫu chuẩn:</b> ${esc(sub.model)}</div>` : ''}
       <button class="btn ghost danger" data-act="cancelSession">Hủy buổi tập</button>
@@ -367,11 +353,11 @@
     const t = document.querySelector('[data-timer]'); if (!t) return;
     const left = a.plannedMin * 60000 - elapsedMs(a);
     t.textContent = H.fmtClock(left); t.style.color = left < 0 ? 'var(--ok)' : 'var(--ink)';
-    const sub = document.querySelector('[data-timer-sub]'); if (sub) sub.textContent = left < 0 ? 'Đã đủ thời gian · bấm Kết thúc khi xong' : `Đã tập ${H.fmtClock(elapsedMs(a))} / ${a.plannedMin} phút`;
+    const sub = document.querySelector('[data-timer-sub]'); if (sub) sub.textContent = left < 0 ? 'Đã đủ thời gian' : `Đã tập ${H.fmtClock(elapsedMs(a))} / ${a.plannedMin} phút`;
     if (left <= 0 && !a.alerted && !a.pausedAt) {
       a.alerted = true; S.saveLocal(); H.beep();
       if (document.visibilityState !== 'visible' && 'Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) navigator.serviceWorker.ready.then(r => r.showNotification('Hết giờ tập', { body: a.goal, icon: 'icons/icon-192.png', badge: 'icons/badge-96.png', tag: 'timer' }));
-      H.toast('Hết giờ! Hoàn thành nốt lượt đang làm rồi bấm Kết thúc.');
+      H.toast('Hết giờ!');
     }
   };
 
@@ -392,24 +378,22 @@
     if (!manual && a.type === 'benchmark') { const b = S.get(a.benchId); h += `<div class="field"><label>Kết quả test (${esc(b?.unit || '')})</label><input class="input" type="number" step="any" name="benchValue" inputmode="decimal"></div>`; }
     if (!manual && a.type === 'review') h += `<div class="field"><label>Ôn có tốt không?</label><div class="stack" style="gap:6px">${a.reviewSubs.map(id => `<div class="sub-item" style="cursor:default"><span class="small" style="flex:1;font-weight:600">${esc(S.get(id)?.name || '')}</span><div class="seg" data-seg="rv-${id}" style="width:170px"><button type="button" data-v="1" class="sel">Tốt</button><button type="button" data-v="0">Chưa tốt</button></div></div>`).join('')}</div></div>`;
     h += `<div class="field"><label>Mức tập trung</label>${focusSeg('focus', 4)}</div>`;
-    if (isSport) h += `<div class="field"><label>Mức gắng sức RPE (1 rất nhẹ · 10 tối đa)</label><input class="input" type="range" name="rpe" min="1" max="10" value="6" oninput="this.nextElementSibling.textContent='RPE '+this.value"><div class="hint">RPE 6</div></div>`;
-    h += `<div class="field"><label>Làm được gì?</label><input class="input" name="wentWell" placeholder="Điều tiến bộ hôm nay"></div>
-      <div class="field"><label>Lỗi chính</label><input class="input" name="mainError" value="${esc(!manual && a.errors[0] ? a.errors[0] : '')}" placeholder="Một lỗi quan trọng nhất"></div>
-      <div class="field"><label>Lần sau chỉnh gì?</label><input class="input" name="nextTime" placeholder="Hành động cụ thể cho buổi tới"></div></div>`;
+    if (isSport) h += `<div class="field"><label>RPE (1–10)</label><input class="input" type="range" name="rpe" min="1" max="10" value="6" oninput="this.nextElementSibling.textContent='RPE '+this.value"><div class="hint">RPE 6</div></div>`;
+    h += `<div class="field"><label>Làm được gì?</label><input class="input" name="wentWell"></div>
+      <div class="field"><label>Lỗi chính</label><input class="input" name="mainError" value="${esc(!manual && a.errors[0] ? a.errors[0] : '')}"></div>
+      <div class="field"><label>Lần sau chỉnh gì?</label><input class="input" name="nextTime"></div></div>`;
     return h;
   };
   A.finishSession = () => {
     const a = active(); const s = S.get(a.skillId); const rate = a.attempts ? a.success / a.attempts : null;
     H.openSheet(`<div class="sheet-head"><h2>Kết thúc buổi tập</h2><button class="icon-btn" data-act="closeSheet">${I('x')}</button></div>
       ${rate !== null ? `<div class="note ${H.zone(rate, a.attempts).cls === 'ok' ? 'ok' : H.zone(rate, a.attempts).cls === 'bad' ? 'bad' : 'warn'}" style="margin-bottom:12px"><b class="num">${a.success}/${a.attempts} (${H.pct(rate)})</b> · ${H.zone(rate, a.attempts).label}</div>` : ''}
-      <p class="small muted" style="margin-bottom:12px">Hai phút ghi lại giúp buổi tập sau bắt đầu đúng chỗ.</p>
       ${reflectForm({ a, s })}
       <div class="sheet-foot"><button class="btn primary" data-act="saveSession">${I('check')} Lưu buổi tập</button></div>`);
   };
   A.logManual = () => {
     const s = H.skills()[0]; if (!s) return;
     H.openSheet(`<div class="sheet-head"><h2>Ghi buổi đã tập</h2><button class="icon-btn" data-act="closeSheet">${I('x')}</button></div>
-      <p class="small muted" style="margin-bottom:12px">Dùng khi tập ngoài app, ví dụ ở sân tập không cầm điện thoại.</p>
       ${reflectForm({ a: null, s, manual: true })}
       <div class="sheet-foot"><button class="btn primary" data-act="saveManual">${I('check')} Lưu</button></div>`);
   };
@@ -420,12 +404,12 @@
     const sub = S.get(subId); if (!sub) return;
     const last = H.sessionsOfSub(subId)[0];
     if (H.levelUpCheck(subId) && (sub.level || 0) < 5) {
-      H.toast(`Đạt ≥ 85% trong 3 buổi liền. Nâng "${sub.name}" lên mức ${(sub.level || 0) + 1}?`, { label: 'Nâng mức', fn: () => { H.setLevel(S.get(subId), (sub.level || 0) + 1); H.toast('Đã nâng mức. Nhớ tăng độ khó bài tập nhé!'); } });
+      H.toast(`Đạt ≥ 85% trong 3 buổi liền. Nâng "${sub.name}" lên mức ${(sub.level || 0) + 1}?`, { label: 'Nâng mức', fn: () => { H.setLevel(S.get(subId), (sub.level || 0) + 1); H.toast('Đã nâng mức'); } });
     } else if (last && last.attempts >= 5) {
       const z = H.zone(last.success / last.attempts, last.attempts);
-      if (z.key === 'hard') H.toast('Buổi này hơi quá sức. Lần sau hãy chia nhỏ bài hoặc giảm độ khó.');
-      else if (z.key === 'easy') H.toast('Buổi này hơi dễ. Lần sau tăng độ khó để vẫn tiến bộ.');
-      else H.toast('Đã lưu. Độ khó đang vừa sức, giữ nhịp này!');
+      if (z.key === 'hard') H.toast('Đã lưu · hơi quá sức');
+      else if (z.key === 'easy') H.toast('Đã lưu · hơi dễ');
+      else H.toast('Đã lưu · vừa sức');
     } else H.toast('Đã lưu buổi tập');
   };
   A.saveSession = () => {
@@ -460,13 +444,12 @@
     const due = H.dueCards(H.today(), sid || null); const all = S.all('card').filter(c => !sid || c.skillId === sid);
     const filter = (q.get('f') || '').toLowerCase();
     const list = all.filter(c => !filter || (c.front + ' ' + c.back).toLowerCase().includes(filter)).sort((a, b) => (a.due || '').localeCompare(b.due || ''));
-    return `<div class="page-head"><div><div class="eyebrow">Tự kiểm tra · ôn giãn cách</div><h1>Thẻ</h1></div><div class="head-actions"><button class="btn" data-act="bulkCards" data-skill="${sid}">${I('upload')} <span>Nhập nhiều</span></button><button class="btn primary" data-act="editCard" data-skill="${sid}">${I('plus')} <span>Thêm</span></button></div></div>
+    return `<div class="page-head"><div><h1>Thẻ</h1></div><div class="head-actions"><button class="btn" data-act="bulkCards" data-skill="${sid}">${I('upload')} <span>Nhập nhiều</span></button><button class="btn primary" data-act="editCard" data-skill="${sid}">${I('plus')} <span>Thêm</span></button></div></div>
       <div class="tabs"><button class="chip ${!sid ? 'sel' : ''}" data-act="nav" data-to="#/cards">Tất cả</button>${skills.map(s => `<button class="chip ${s.id === sid ? 'sel' : ''}" data-act="nav" data-to="#/cards?skill=${s.id}"><span class="dot" style="background:${s.color}"></span>${esc(s.name)}</button>`).join('')}</div>
       <div class="grid bento">
-        <div class="card span-5"><div class="hero">${C.ring(due.length ? 0 : 1, 1, { size: 100, stroke: 10, label: String(due.length), sub: 'đến hạn', color: due.length ? 'var(--warn)' : 'var(--ok)' })}<div class="stack" style="gap:8px;flex:1"><div class="small muted">${all.length} thẻ · ${all.filter(c => (c.reps || 0) >= 3).length} đã nhớ chắc</div><button class="btn primary block" data-act="startCards" data-skill="${sid}" ${due.length ? '' : 'disabled'}>${I('play')} Ôn ${due.length} thẻ</button></div></div></div>
-        <div class="card span-7"><div class="card-head"><h3>Mẹo</h3></div><p class="small muted">Cố nhớ đáp án trước khi lật thẻ. Việc phải cố nhớ chính là lúc trí nhớ được củng cố. Chấm thật lòng: thẻ khó sẽ quay lại sớm, thẻ dễ sẽ giãn ra 1 → 3 → 7+ ngày.</p></div>
+        <div class="card span-12"><div class="hero">${C.ring(due.length ? 0 : 1, 1, { size: 100, stroke: 10, label: String(due.length), sub: 'đến hạn', color: due.length ? 'var(--warn)' : 'var(--ok)' })}<div class="stack" style="gap:8px;flex:1"><div class="small muted">${all.length} thẻ · ${all.filter(c => (c.reps || 0) >= 3).length} đã nhớ chắc</div><button class="btn primary block" data-act="startCards" data-skill="${sid}" ${due.length ? '' : 'disabled'}>${I('play')} Ôn ${due.length} thẻ</button></div></div></div>
         <div class="card span-12"><div class="card-head"><h3>Tất cả thẻ</h3><input class="input" style="max-width:240px;min-height:38px" placeholder="Tìm…" value="${esc(filter)}" data-change="cardFilter"></div>
-          ${list.length ? `<div class="list">${list.slice(0, 200).map(c => { const s = S.get(c.skillId); return `<div class="li click" data-act="editCard" data-id="${c.id}"><span class="dot" style="background:${s?.color || '#999'}"></span><div class="grow"><div class="title small trunc">${esc(c.front)}</div><div class="sub trunc">${esc(c.back)}</div></div><span class="chip xs ${c.due <= H.today() ? 'warn' : ''}">${c.due <= H.today() ? 'Đến hạn' : H.fmtDay(c.due)}</span></div>`; }).join('')}</div>` : empty('cards', 'Chưa có thẻ', 'Thêm thẻ cho phần kiến thức cần nhớ, hoặc dán nhiều thẻ một lúc bằng nút Nhập nhiều.')}</div>
+          ${list.length ? `<div class="list">${list.slice(0, 200).map(c => { const s = S.get(c.skillId); return `<div class="li click" data-act="editCard" data-id="${c.id}"><span class="dot" style="background:${s?.color || '#999'}"></span><div class="grow"><div class="title small trunc">${esc(c.front)}</div><div class="sub trunc">${esc(c.back)}</div></div><span class="chip xs ${c.due <= H.today() ? 'warn' : ''}">${c.due <= H.today() ? 'Đến hạn' : H.fmtDay(c.due)}</span></div>`; }).join('')}</div>` : empty('cards', 'Chưa có thẻ', '')}</div>
       </div>`;
   };
   H.Change.cardFilter = el => { const q = new URLSearchParams(location.hash.split('?')[1] || ''); q.set('f', el.value); history.replaceState(null, '', '#/cards?' + q.toString()); H.render(); const i = document.querySelector('[data-change="cardFilter"]'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } };
@@ -477,7 +460,7 @@
     const s = S.get(c.skillId);
     return `<div class="session"><div class="row"><button class="back" data-act="endCards">${I('x')} Dừng</button><span class="spacer"></span><span class="small muted num">${run.i + 1}/${run.queue.length}</span></div>
       <div class="bar"><span style="width:${run.i / run.queue.length * 100}%"></span></div>
-      <div class="card flash" data-act="flip">${s ? `<div style="margin-bottom:12px">${skillChip(s)}</div>` : ''}<div>${esc(c.front)}</div>${run.show ? `<div class="ans">${esc(c.back)}</div>` : `<div class="small muted" style="margin-top:18px">Chạm để xem đáp án · phím Space</div>`}</div>
+      <div class="card flash" data-act="flip">${s ? `<div style="margin-bottom:12px">${skillChip(s)}</div>` : ''}<div>${esc(c.front)}</div>${run.show ? `<div class="ans">${esc(c.back)}</div>` : ''}</div>
       ${run.show ? `<div class="grade">${[[1, 'Quên', 'g1'], [2, 'Khó', 'g2'], [3, 'Được', 'g3'], [4, 'Dễ', 'g4']].map(([g, t, cl]) => `<button class="${cl}" data-act="grade" data-g="${g}">${t}<small>${H.cardPreview(c, g)} ngày · ${g}</small></button>`).join('')}</div>` : `<button class="btn primary lg block" data-act="flip">Xem đáp án</button>`}</div>`;
   };
   A.flip = () => { if (run && !run.show) { run.show = true; H.render(); } };
@@ -505,14 +488,14 @@
     const sid = el.dataset.skill || H.skills()[0]?.id; if (!sid) return H.toast('Tạo kỹ năng trước');
     H.openSheet(`<div class="sheet-head"><h2>Nhập nhiều thẻ</h2><button class="icon-btn" data-act="closeSheet">${I('x')}</button></div>
       <div class="form"><div class="field"><label>Kỹ năng</label><select class="input" name="skill">${H.skills().map(s => `<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></div>
-      <div class="field"><label>Mỗi dòng một thẻ: câu hỏi | đáp án</label><textarea class="input" name="text" rows="8" placeholder="Độ phức tạp tìm kiếm nhị phân? | O(log n)&#10;SMART gồm những gì? | Specific, Measurable, Achievable, Relevant, Time-bound" data-input="bulkPreview"></textarea><span class="hint">Dùng dấu | hoặc phím Tab để ngăn câu hỏi và đáp án. Dán trực tiếp từ Excel/Google Sheets (2 cột) cũng được.</span></div></div>
+      <div class="field"><label>Mỗi dòng: câu hỏi | đáp án</label><textarea class="input" name="text" rows="8" data-input="bulkPreview"></textarea></div></div>
       <div class="small muted" data-bulk-count style="margin-top:8px">0 thẻ hợp lệ</div>
       <div class="sheet-foot"><button class="btn primary" data-act="bulkCardsSave">${I('check')} Thêm thẻ</button></div>`);
   };
   const parseBulk = t => t.split('\n').map(l => l.split(/\t|\s\|\s|\|/)).filter(p => p.length >= 2 && p[0].trim() && p.slice(1).join(' | ').trim()).map(p => ({ front: p[0].trim(), back: p.slice(1).join(' | ').trim() }));
   H.Input = { bulkPreview: el => { const n = parseBulk(el.value).length; const c = el.closest('.sheet').querySelector('[data-bulk-count]'); if (c) c.textContent = `${n} thẻ hợp lệ`; } };
   A.bulkCardsSave = el => {
-    const sh = el.closest('.sheet'); const cards = parseBulk(val(sh, 'text')); if (!cards.length) return H.toast('Chưa có dòng nào đúng dạng "câu hỏi | đáp án"');
+    const sh = el.closest('.sheet'); const cards = parseBulk(val(sh, 'text')); if (!cards.length) return H.toast('Chưa có dòng hợp lệ');
     const sid = val(sh, 'skill'); cards.forEach(c => H.newCard(sid, c.front, c.back, true)); S.emit('local'); H.closeSheet(); H.toast(`Đã thêm ${cards.length} thẻ`);
   };
 
@@ -530,17 +513,17 @@
     const lvlUps = S.all('subskill').filter(x => (x.levelHistory || []).some((h, i, arr) => i > 0 && h.d > H.addDays(t, -7) && h.l > arr[i - 1].l)).length;
     const wk = H.isoWeek(t); const rv = S.all('review').find(r => r.week === wk);
     const trend = mp7 ? Math.round((m7 - mp7) / mp7 * 100) : null;
-    return `<div class="page-head"><div><div class="eyebrow">Đo chất lượng, không chỉ đếm giờ</div><h1>Thống kê</h1></div></div>
+    return `<div class="page-head"><div><h1>Thống kê</h1></div></div>
     <div class="grid bento">
       <div class="card span-12"><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:16px">
         <div class="stat"><span class="v num">${H.fmtMinShort(m7)}</span><span class="k">7 ngày qua${trend !== null ? ` · <b style="color:${trend >= 0 ? 'var(--ok)' : 'var(--bad)'}">${trend >= 0 ? '+' : ''}${trend}%</b>` : ''}</span></div>
         <div class="stat"><span class="v num">${m7 ? H.pct(delib7 / m7) : '—'}</span><span class="k">thời gian có chủ đích</span></div>
-        <div class="stat"><span class="v num">${rate7 !== null ? H.pct(rate7) : '—'}</span><span class="k">tỉ lệ đạt (mục tiêu 60–85%)</span></div>
+        <div class="stat"><span class="v num">${rate7 !== null ? H.pct(rate7) : '—'}</span><span class="k">tỉ lệ đạt</span></div>
         <div class="stat"><span class="v num">${focus7 !== null ? focus7.toFixed(1) : '—'}</span><span class="k">tập trung TB /5</span></div>
         <div class="stat"><span class="v num">${lvlUps}</span><span class="k">kỹ năng con lên mức</span></div>
         <div class="stat"><span class="v num">${H.fmtMinShort(total)}</span><span class="k">tổng đã tập</span></div>
       </div></div>
-      <div class="card span-12"><div class="card-head"><h2>${I('spark')} Nhận xét tuần này</h2><span class="xs muted">tự động từ số liệu</span></div>${V.insights(last7, prev7, m7, mp7, rate7, focus7, delib7)}</div>
+      <div class="card span-12"><div class="card-head"><h2>${I('spark')} Nhận xét tuần này</h2></div>${V.insights(last7, prev7, m7, mp7, rate7, focus7, delib7)}</div>
       <div class="card span-7"><div class="card-head"><h2>Phút mỗi tuần</h2></div>${C.stackBars(weeks)}<div class="legend" style="margin-top:8px">${skills.filter(s => !s.archived).map(s => `<span><i class="dot" style="background:${s.color}"></i>${esc(s.name)}</span>`).join('')}</div></div>
       <div class="card span-5"><div class="card-head"><h2>16 tuần gần nhất</h2></div>${C.heatmap(byDay, 16, st.dailyMin)}<div class="legend" style="margin-top:10px"><span>Ít</span><span class="heat" style="display:inline-flex;grid-template-rows:none;gap:3px"><i></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i></span><span>Đủ ${st.dailyMin}p</span></div></div>
       <div class="card span-7"><div class="card-head"><h2>Theo kỹ năng · 7 ngày</h2></div><div class="list">${H.skills().map(sk => { const xs = last7.filter(x => x.skillId === sk.id); const a2 = xs.filter(x => x.attempts); const r = a2.length ? H.sum(a2.map(x => x.success)) / H.sum(a2.map(x => x.attempts)) : null; const target = sk.dailyMin * 7; const m = H.sum(xs.map(x => x.minutes)); return `<div class="li"><span class="dot" style="background:${sk.color}"></span><div class="grow"><div class="row"><span class="title small" style="flex:1">${esc(sk.name)}</span><span class="small num">${H.fmtMinShort(m)} / ${H.fmtMinShort(target)}</span></div><div class="bar" style="--c:${sk.color};margin-top:6px"><span style="width:${Math.min(m / target, 1) * 100}%"></span></div><div class="xs muted" style="margin-top:4px">${xs.length} buổi · tỉ lệ đạt ${r !== null ? H.pct(r) : '—'} · mức TB ${H.skillLevel(sk.id).toFixed(1)}/5</div></div></div>`; }).join('') || '<p class="small muted">Chưa có kỹ năng.</p>'}</div></div>
@@ -555,7 +538,7 @@
   V.insights = (last7, prev7, m7, mp7, rate7, focus7, delib7) => {
     const st = H.settings(); const out = []; const t = H.today();
     const add = (cls, text) => out.push({ cls, text });
-    if (!last7.length) return `<div class="note">Chưa có buổi tập nào trong 7 ngày qua. Bắt đầu bằng một buổi ngắn 15 phút để có số liệu.</div>`;
+    if (!last7.length) return `<div class="note">Chưa có buổi tập trong 7 ngày qua.</div>`;
     const target = st.dailyMin * (7 - (st.restDays || []).length);
     const days = new Set(last7.map(s => s.day)).size;
     add(m7 >= target * 0.9 ? 'ok' : m7 >= target * 0.6 ? 'warn' : 'bad', `Tập ${H.fmtMin(m7)} / mục tiêu ${H.fmtMin(target)} (${Math.round(m7 / (target || 1) * 100)}%), trong ${days}/7 ngày.${mp7 ? ` So với tuần trước: ${m7 >= mp7 ? '+' : ''}${Math.round((m7 - mp7) / mp7 * 100)}%.` : ''}`);
@@ -583,7 +566,7 @@
     // dòng tổng quan đứng đầu, sau đó ưu tiên vấn đề nặng; tối đa 6 dòng cho gọn
     const rank = { bad: 0, warn: 1, ok: 2 }; const head = out.shift();
     out.sort((x, y) => rank[x.cls] - rank[y.cls]); const shown = [head, ...out.slice(0, 5)]; const more = out.length - 5;
-    return `<div class="insights">${shown.map(o => `<div class="ins ${o.cls}">${I(ico[o.cls], 'xs')}<span>${esc(o.text)}</span></div>`).join('')}</div>${more > 0 ? `<p class="xs muted" style="margin-top:8px">+${more} nhận xét khác. Xử lý các mục trên trước.</p>` : ''}`;
+    return `<div class="insights">${shown.map(o => `<div class="ins ${o.cls}">${I(ico[o.cls], 'xs')}<span>${esc(o.text)}</span></div>`).join('')}</div>${more > 0 ? `<p class="xs muted" style="margin-top:8px">+${more} nhận xét khác</p>` : ''}`;
   };
   const reviewRec = () => { const wk = H.isoWeek(H.today()); return S.all('review').find(r => r.week === wk) || { id: H.uid(), week: wk }; };
   A.saveReview = () => { const r = reviewRec(); const m = document.getElementById('view'); Object.assign(r, { good: val(m, 'rv-good'), bad: val(m, 'rv-bad'), next: val(m, 'rv-next') }); S.put('review', r); H.toast('Đã lưu rà soát tuần'); };
@@ -592,40 +575,31 @@
   V.settings = () => {
     const st = H.settings(); const Sy = H.Sync; const cfg = Sy.cfg(); const base = window.HHKN_CONFIG || {};
     const needCfg = !(base.supabaseUrl && base.supabaseAnonKey);
-    let html = `<div class="page-head"><div><div class="eyebrow">Hùng học kỹ năng · v1.1</div><h1>Cài đặt</h1></div></div><div class="grid g2 settings-grid">`;
+    let html = `<div class="page-head"><div><div class="eyebrow">v1.2</div><h1>Cài đặt</h1></div></div><div class="grid g2 settings-grid">`;
     // Đồng bộ
-    html += `<div class="card"><div class="card-head"><h2>${I('cloud')} Đồng bộ</h2><span class="row small"><span class="sync-dot" data-sync-dot></span></span></div>
+    html += `<div class="card"><div class="card-head"><h2>${I('cloud')} Đồng bộ</h2><span class="sync-dot" data-sync-dot></span></div>
       <p class="small muted" style="margin-bottom:12px" data-sync-text>${esc(Sy.label())}</p>`;
-    if (needCfg) html += `<details ${Sy.configured() ? '' : 'open'} style="margin-bottom:12px"><summary class="small" style="cursor:pointer;font-weight:600">Kết nối Supabase</summary><div class="form" style="margin-top:10px"><div class="field"><label>Supabase URL</label><input class="input" name="sbUrl" value="${esc(cfg.supabaseUrl)}" placeholder="https://xxxx.supabase.co"></div><div class="field"><label>Anon key</label><input class="input" name="sbKey" value="${esc(cfg.supabaseAnonKey)}"></div><div class="field"><label>VAPID public key (cho nhắc tập)</label><input class="input" name="vapid" value="${esc(cfg.vapidPublicKey)}"></div><button class="btn" data-act="saveCfg">Lưu kết nối</button><p class="xs muted">Hoặc điền sẵn vào file config.js trước khi deploy để không phải nhập trên từng máy.</p></div></details>`;
+    if (needCfg) html += `<details ${Sy.configured() ? '' : 'open'} style="margin-bottom:12px"><summary class="small" style="cursor:pointer;font-weight:600">Kết nối Supabase</summary><div class="form" style="margin-top:10px"><div class="field"><label>Supabase URL</label><input class="input" name="sbUrl" value="${esc(cfg.supabaseUrl)}"></div><div class="field"><label>Anon key</label><input class="input" name="sbKey" value="${esc(cfg.supabaseAnonKey)}"></div><div class="field"><label>VAPID public key</label><input class="input" name="vapid" value="${esc(cfg.vapidPublicKey)}"></div><button class="btn" data-act="saveCfg">Lưu kết nối</button></div></details>`;
     if (Sy.configured() && Sy.sb) {
-      if (Sy.user) html += `<div class="row" style="margin-bottom:10px"><div class="grow" style="flex:1"><div class="small muted">Đã đăng nhập</div><div style="font-weight:600" class="trunc">${esc(Sy.user.email)}</div></div><button class="btn sm" data-act="syncNow">${I('refresh', 'xs')} Đồng bộ</button><button class="btn sm ghost" data-act="signOut" aria-label="Đăng xuất">${I('logout', 'xs')}</button></div>`;
-      else html += `<div class="form"><div class="field"><label>Email</label><input class="input" name="email" type="email" autocomplete="username"></div><div class="field"><label>Mật khẩu</label><input class="input" name="password" type="password" autocomplete="current-password"></div><div class="row"><button class="btn primary" style="flex:1" data-act="signIn">Đăng nhập</button><button class="btn" data-act="signUp">Tạo tài khoản</button></div></div>`;
-    } else if (!needCfg) html += `<div class="note warn small">Không tải được thư viện Supabase. Kiểm tra kết nối mạng.</div>`;
+      if (Sy.user) html += `<div class="set-row" style="border-top:0;padding-top:0"><span class="lbl-t trunc" style="font-weight:600">${esc(Sy.user.email)}</span></div><div class="btn-grid"><button class="btn" data-act="syncNow">${I('refresh', 'xs')} Đồng bộ</button><button class="btn ghost" data-act="signOut">${I('logout', 'xs')} Đăng xuất</button></div>`;
+      else html += `<div class="form"><div class="field"><label>Email</label><input class="input" name="email" type="email" autocomplete="username"></div><div class="field"><label>Mật khẩu</label><input class="input" name="password" type="password" autocomplete="current-password"></div><div class="btn-grid"><button class="btn primary" data-act="signIn">Đăng nhập</button><button class="btn" data-act="signUp">Tạo tài khoản</button></div></div>`;
+    } else if (!needCfg) html += `<div class="note warn small">Không tải được thư viện đồng bộ.</div>`;
     html += `</div>`;
     // Mục tiêu
-    html += `<div class="card"><div class="card-head"><h2>${I('target')} Mục tiêu</h2></div><div class="form">
-      <div class="field"><label>Tổng phút luyện tập mỗi ngày</label><div class="chips">${[60, 90, 120, 150, 180].map(m => `<button class="chip ${m === st.dailyMin ? 'sel' : ''}" data-act="setDaily" data-m="${m}">${m} phút</button>`).join('')}</div></div>
-      <div class="field"><label>Ngày nghỉ trong tuần</label><div class="chips">${[1, 2, 3, 4, 5, 6, 0].map(d => `<button class="chip ${(st.restDays || []).includes(d) ? 'sel' : ''}" data-act="toggleRest" data-d="${d}">${H.WD[d]}</button>`).join('')}</div><span class="hint">Ngày nghỉ không làm đứt chuỗi ngày tập.</span></div>
-      <div class="field"><label>Chia phút cho từng kỹ năng</label>${H.skills().map(s => `<div class="row" style="margin-top:6px"><span class="dot" style="background:${s.color}"></span><span style="flex:1" class="small">${esc(s.name)}</span><input class="input" style="width:90px;min-height:38px" type="number" min="5" step="5" value="${s.dailyMin}" data-change="skillMin" data-id="${s.id}"><span class="small muted">phút</span></div>`).join('') || '<span class="hint">Chưa có kỹ năng.</span>'}<span class="hint">App chia theo tỉ lệ này sau khi trừ thời gian ôn thẻ và ôn xen kẽ.</span></div></div></div>`;
+    html += `<div class="card"><div class="card-head"><h2>${I('target')} Mục tiêu</h2></div>
+      <div class="set-sec"><div class="lbl">Phút mỗi ngày</div><div class="opt-grid" style="--n:5">${[60, 90, 120, 150, 180].map(m => `<button class="chip num ${m === st.dailyMin ? 'sel' : ''}" data-act="setDaily" data-m="${m}">${m}</button>`).join('')}</div></div>
+      <div class="set-sec"><div class="lbl">Ngày nghỉ</div><div class="opt-grid" style="--n:7">${[1, 2, 3, 4, 5, 6, 0].map(d => `<button class="chip ${(st.restDays || []).includes(d) ? 'sel' : ''}" data-act="toggleRest" data-d="${d}">${H.WD[d]}</button>`).join('')}</div></div>
+      ${H.skills().length ? `<div class="set-sec"><div class="lbl">Phút cho từng kỹ năng</div><div>${H.skills().map(s => `<div class="set-row"><span class="dot" style="background:${s.color}"></span><span class="lbl-t trunc">${esc(s.name)}</span><input class="input num" type="number" min="5" step="5" inputmode="numeric" value="${s.dailyMin}" data-change="skillMin" data-id="${s.id}" aria-label="Phút/ngày"></div>`).join('')}</div></div>` : ''}</div>`;
     // Nhắc tập
     html += `<div class="card"><div class="card-head"><h2>${I('bell')} Nhắc tập</h2><span class="chip" data-push-state>…</span></div>
-      <div class="row wrap" style="margin-bottom:12px"><button class="btn primary sm" data-act="enablePush">Bật thông báo</button><button class="btn sm" data-act="testLocal">Thử trên máy</button><button class="btn sm" data-act="testServer">Thử từ server</button><button class="btn sm ghost" data-act="disablePush">Tắt</button></div>
-      <div class="list">${(st.reminders || []).map((r, i) => `<div class="li"><span style="flex:1" class="small">Nhắc lúc</span><input class="input" type="time" value="${r.time}" style="width:150px;min-height:38px" data-change="remTime" data-i="${i}"><label class="switch"><input type="checkbox" ${r.on ? 'checked' : ''} data-change="remOn" data-i="${i}"><span></span></label></div>`).join('')}
-      <div class="li"><span style="flex:1" class="small">Nhắc nếu chưa đủ phút lúc</span><input class="input" type="time" value="${st.evening?.time || '21:30'}" style="width:150px;min-height:38px" data-change="eveTime"><label class="switch"><input type="checkbox" ${st.evening?.on ? 'checked' : ''} data-change="eveOn"><span></span></label></div></div>
-      <div class="row" style="margin-top:10px"><button class="btn sm ghost" data-act="addRem">${I('plus', 'xs')} Thêm giờ nhắc</button><span class="spacer"></span><button class="btn sm" data-act="downloadIcs">${I('calendar', 'xs')} File lịch .ics</button></div>
-      <p class="xs muted" style="margin-top:8px">Thông báo từ server cần đăng nhập và đã cài Edge Function (xem HUONG-DAN.md). File .ics là cách dự phòng: thêm lịch nhắc lặp lại vào Google Calendar.</p></div>`;
+      <div class="btn-grid"><button class="btn primary" data-act="enablePush">Bật thông báo</button><button class="btn" data-act="disablePush">Tắt</button><button class="btn" data-act="testLocal">Thử trên máy</button><button class="btn" data-act="testServer">Thử từ server</button></div>
+      <div class="set-sec">${(st.reminders || []).map((r, i) => `<div class="set-row"><span class="lbl-t">Nhắc lúc</span><input class="input num" type="time" value="${r.time}" data-change="remTime" data-i="${i}"><label class="switch"><input type="checkbox" ${r.on ? 'checked' : ''} data-change="remOn" data-i="${i}"><span></span></label></div>`).join('')}
+      <div class="set-row"><span class="lbl-t">Nhắc nếu thiếu</span><input class="input num" type="time" value="${st.evening?.time || '21:30'}" data-change="eveTime"><label class="switch"><input type="checkbox" ${st.evening?.on ? 'checked' : ''} data-change="eveOn"><span></span></label></div></div>
+      <div class="btn-grid" style="margin-top:12px"><button class="btn" data-act="addRem">${I('plus', 'xs')} Thêm giờ</button><button class="btn" data-act="downloadIcs">${I('calendar', 'xs')} File .ics</button></div></div>`;
     // Dữ liệu
-    html += `<div class="card"><div class="card-head"><h2>${I('download')} Dữ liệu</h2></div><p class="small muted" style="margin-bottom:12px">${Object.keys(S.recs).length} bản ghi trên máy · ${Object.keys(S.meta.dirty).length} chưa đồng bộ.</p>
-      <div class="row wrap"><button class="btn" data-act="exportJson">${I('download', 'xs')} Xuất JSON</button><label class="btn">${I('upload', 'xs')} Nhập JSON<input type="file" accept="application/json" hidden data-change="importJson"></label><button class="btn danger" data-act="wipeLocal">${I('trash', 'xs')} Xóa dữ liệu trên máy</button></div></div>`;
-    // Giới thiệu
-    html += `<div class="card"><div class="card-head"><h2>${I('book')} Phương pháp</h2></div><div class="small" style="display:flex;flex-direction:column;gap:8px">
-      <p><b>Luyện tập có chủ đích:</b> mỗi buổi một mục tiêu nhỏ, tập ở mức hơi quá sức, có phản hồi ngay, sửa lỗi cụ thể.</p>
-      <p><b>Vùng vừa sức:</b> giữ tỉ lệ đạt khoảng 60–85%. Cao hơn thì tăng độ khó, thấp hơn thì chia nhỏ bài.</p>
-      <p><b>Ôn giãn cách và học xen kẽ:</b> kỹ năng con đạt mức 3 trở lên được hẹn ôn lại sau 1 → 3 → 7 → 14 → 30 → 60 ngày, khi ôn thì trộn nhiều kỹ năng con.</p>
-      <p><b>Tự kiểm tra:</b> thẻ hỏi đáp theo thuật toán SM-2.</p>
-      <p><b>Đo thật:</b> làm bài test mốc mỗi 14 ngày và rà soát mỗi tuần.</p>
-      <p class="muted xs">by Nguyễn Mạnh Hùng</p></div></div>`;
-    html += `</div>`;
+    html += `<div class="card"><div class="card-head"><h2>${I('download')} Dữ liệu</h2><span class="xs muted num">${Object.keys(S.recs).length} bản ghi · ${Object.keys(S.meta.dirty).length} chờ</span></div>
+      <div class="btn-grid"><button class="btn" data-act="exportJson">${I('download', 'xs')} Xuất JSON</button><label class="btn">${I('upload', 'xs')} Nhập JSON<input type="file" accept="application/json" hidden data-change="importJson"></label><button class="btn danger full" data-act="wipeLocal">${I('trash', 'xs')} Xóa dữ liệu trên máy</button></div></div>`;
+    html += `</div><p class="xs faint mobile-only" style="text-align:center;margin-top:18px">by Nguyễn Mạnh Hùng</p>`;
     setTimeout(V.refreshPushState, 0);
     return html;
   };

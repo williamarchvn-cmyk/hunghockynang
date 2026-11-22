@@ -1,5 +1,5 @@
 # Ngữ cảnh dự án: PWA "Hùng học kỹ năng"
-Cập nhật: 22/11/2026 · phiên bản v1.1 · by Nguyễn Mạnh Hùng
+Cập nhật: 22/11/2026 · phiên bản v1.2 · by Nguyễn Mạnh Hùng
 
 ## Mục tiêu
 App cá nhân học song song nhiều kỹ năng (Lập kế hoạch, Lập trình, Thể thao) theo luyện tập có chủ đích, kết hợp chia nhỏ kỹ năng, ôn giãn cách, học xen kẽ, tự kiểm tra, test mốc, rà soát tuần. 120 phút/ngày.
@@ -9,6 +9,7 @@ App cá nhân học song song nhiều kỹ năng (Lập kế hoạch, Lập trì
 - Dữ liệu offline-first (localStorage), đồng bộ Supabase, bản sửa sau cùng thắng, realtime.
 - KHÔNG dùng AI (đã bỏ ở v1.1 theo yêu cầu). Gợi ý mục tiêu, nhận xét tuần đều tính từ dữ liệu.
 - PWA + Web Push (Edge Function send-reminders + pg_cron mỗi 5 phút), có .ics dự phòng.
+- v1.2: Hùng là người dùng duy nhất, đã biết cách dùng → bỏ 3 mẫu kỹ năng (Lập kế hoạch/Lập trình/Thể thao), bỏ chữ hướng dẫn/mẹo/placeholder ví dụ, bỏ thẻ "Phương pháp"; nút Thêm kỹ năng mở thẳng form.
 - Vanilla JS, không cần build. Tên app: "Hùng học kỹ năng".
 
 ## Cấu trúc
@@ -22,8 +23,9 @@ Icon PNG sinh bằng `python3 tools/tao-icon.py`. Phông và vendor/supabase.js 
 ## Trạng thái
 - v1.0 đã deploy: https://hunghockynang.vercel.app (đăng nhập & đồng bộ Supabase chạy).
 - v1.1: bỏ AI, tối ưu tốc độ (chỉ mục + nhớ đệm + gộp ghi), tự lưu phông/thư viện, sửa tràn ngang mobile. Test 2 kích thước không lỗi console, không request ngoài.
+- v1.2: Cài đặt trên điện thoại dàn lưới đều (opt-grid 5/7 cột, btn-grid 2 cột, set-row thẳng hàng); cache SW hhkn-v1.2.0.
 - CHƯA làm: chạy schema.sql trên project Supabase thật, deploy hosting, deploy Edge Function, đặt secret, chạy cron.sql, thử thông báo trên S23 (tùy tiến độ của Hùng).
 - Sandbox không gọi được Supabase thật nên đồng bộ và push chưa kiểm chứng với dịch vụ thật.
 
 ## Việc tiếp theo
-Làm theo HUONG-DAN.md (bước 1 hosting, 2 chạy schema.sql, 5 Edge Function + cron, 6 cài app, 7 cập nhật bản mới). Với môn thể thao cụ thể: tự tạo kỹ năng riêng.
+Làm theo HUONG-DAN.md (bước 1 hosting, 2 chạy schema.sql, 5 Edge Function + cron, 6 cài app, 7 cập nhật bản mới). 

@@ -1,5 +1,5 @@
 /* Service worker — Hùng học kỹ năng */
-const VERSION = 'hhkn-v1.1.0';
+const VERSION = 'hhkn-v1.2.0';
 const SHELL = ['./', 'index.html', 'styles.css', 'config.js', 'manifest.webmanifest',
   'js/core.js', 'js/sync.js', 'js/charts.js', 'js/views.js', 'js/main.js', 'vendor/supabase.js',
   'fonts/bvp-vietnamese-400.woff2', 'fonts/bvp-latin-400.woff2', 'fonts/bvp-vietnamese-500.woff2', 'fonts/bvp-latin-500.woff2',

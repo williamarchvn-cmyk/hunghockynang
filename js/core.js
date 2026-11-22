@@ -148,51 +148,6 @@ H.TYPES = { planning: { label: 'Lập kế hoạch', icon: 'plan' }, coding: { l
 H.LEVELS = ['Chưa biết', 'Biết lý thuyết', 'Làm được khi có hướng dẫn', 'Tự làm được, còn chậm', 'Nhanh và ổn định', 'Thành thạo, dạy được người khác'];
 H.REVIEW_STEPS = [1, 3, 7, 14, 30, 60];
 
-/* ---------- Mẫu kỹ năng ---------- */
-H.TEMPLATES = {
-  planning: {
-    name: 'Lập kế hoạch', type: 'planning', color: '#4F46E5', dailyMin: 30,
-    goal: 'Lập được kế hoạch tuần/tháng mà ≥ 80% việc xong đúng hạn và sai số ước lượng ≤ 20%.',
-    subs: [
-      ['Xác định mục tiêu (SMART/OKR)', 'Viết mục tiêu cụ thể, đo được, có hạn chót.', 2, ['Viết lại 3 mục tiêu mơ hồ thành SMART trong 10 phút', 'Đặt 1 OKR cho tháng: 1 mục tiêu + 3 kết quả then chốt có con số'], 'Mỗi kết quả then chốt phải có con số và hạn chót; so với mẫu OKR công khai của các công ty lớn.'],
-      ['Chia nhỏ công việc (WBS)', 'Chia dự án thành các việc nhỏ ≤ 2 giờ, không thiếu không trùng.', 3, ['Chia một dự án thật thành các việc ≤ 2 giờ', 'Vẽ cây WBS 3 cấp rồi kiểm tra không thiếu/không trùng (MECE)'], 'Mỗi việc lá có động từ + kết quả bàn giao rõ ràng.'],
-      ['Ước lượng thời gian', 'Ước lượng sát thực tế, biết bù rủi ro.', 3, ['Ước lượng 5 việc hôm nay, cuối ngày ghi thời gian thực và tính sai số %', 'Ước lượng 3 điểm (lạc quan / thường / bi quan) cho 1 việc lớn'], 'Sai số ≤ 20% là tốt; ghi lại nguyên nhân lệch.'],
-      ['Sắp thứ tự ưu tiên', 'Chọn đúng việc quan trọng (Eisenhower, MoSCoW).', 2, ['Xếp 20 việc vào ma trận Eisenhower trong 10 phút', 'Phân loại MoSCoW cho tính năng của một dự án'], ''],
-      ['Xếp lịch theo khối thời gian', 'Đặt việc vào lịch theo khối, giữ được kỷ luật.', 2, ['Time-block cho ngày mai, cuối ngày đo % khối giữ được', 'Đặt khối làm việc sâu 90 phút vào giờ năng lượng cao nhất'], ''],
-      ['Lường trước rủi ro', 'Nhìn ra rủi ro và có phương án dự phòng.', 1, ['Premortem 10 phút: giả sử dự án thất bại, liệt kê 10 lý do', 'Lập bảng rủi ro: khả năng × tác động × phương án'], ''],
-      ['Rà soát tuần', 'Nhìn lại, rút kinh nghiệm, điều chỉnh kế hoạch.', 2, ['Rà soát tuần 30 phút theo checklist: xong gì, trễ gì, vì sao, tuần tới đổi gì'], '']
-    ],
-    benches: [['Sai số ước lượng trung bình', '%', false, 'Ước lượng 5 việc trong ngày, so với thời gian thực, lấy trung bình |thực − ước| / ước.'], ['Tỉ lệ việc xong đúng hạn trong tuần', '%', true, 'Số việc xong đúng hạn / tổng số việc đã lên kế hoạch trong tuần.']]
-  },
-  coding: {
-    name: 'Lập trình', type: 'coding', color: '#0F8B8D', dailyMin: 50,
-    goal: 'Tự xây và triển khai được một web app nhỏ có đăng nhập, lưu dữ liệu và test cơ bản trong 1 cuối tuần.',
-    subs: [
-      ['Đọc hiểu code', 'Đọc code người khác, nắm luồng chạy nhanh.', 2, ['Đọc 1 file mã nguồn mở 20 phút, rồi tóm tắt luồng chạy mà không nhìn lại', 'Giải thích một hàm phức tạp bằng lời cho người khác'], 'So với cách tác giả mô tả trong README/PR.'],
-      ['Cấu trúc dữ liệu & thuật toán', 'Chọn đúng cấu trúc dữ liệu, viết thuật toán đúng và đủ nhanh.', 3, ['Giải 1 bài kata có giới hạn 25 phút', 'Giải lại một bài cũ từ trí nhớ sau 3 ngày'], 'Xem lời giải tốt nhất sau khi tự làm, ghi lại ý khác biệt.'],
-      ['Gỡ lỗi (debug)', 'Tái hiện → giả thuyết → kiểm chứng → sửa.', 3, ['Nhờ AI cài sẵn 3 lỗi vào đoạn code, tự tìm trong 20 phút', 'Ghi nhật ký debug: giả thuyết nào đúng/sai'], ''],
-      ['Viết test', 'Viết test bao phủ trường hợp biên.', 2, ['Viết test trước cho 1 hàm (TDD)', 'Liệt kê 5 trường hợp biên cho một hàm rồi test hết'], ''],
-      ['Thiết kế & kiến trúc', 'Chia module hợp lý, dễ đọc dễ sửa.', 2, ['Vẽ sơ đồ thành phần cho một app đang làm', 'Refactor một file dài thành các module nhỏ'], ''],
-      ['Công cụ (Git, terminal)', 'Dùng Git và terminal nhuần nhuyễn.', 1, ['Gõ 10 lệnh Git thường dùng không tra cứu', 'Tự tạo và xử lý một merge conflict'], ''],
-      ['Làm việc cùng AI', 'Viết yêu cầu rõ ràng, review được code AI viết.', 3, ['Viết spec 1 trang cho một tính năng rồi giao AI code', 'Review code AI viết, tìm ít nhất 3 vấn đề'], '']
-    ],
-    benches: [['Số bài kata giải được trong 30 phút', 'bài', true, 'Chọn bài mức dễ–trung bình, bấm giờ 30 phút.'], ['Thời gian làm tính năng chuẩn (Todo CRUD + lưu trữ)', 'phút', false, 'Làm lại cùng một tính năng chuẩn từ đầu, bấm giờ đến khi chạy đúng.']]
-  },
-  sport: {
-    name: 'Thể thao', type: 'sport', color: '#D9480F', dailyMin: 40,
-    goal: 'Thực hiện kỹ thuật cốt lõi đúng ≥ 18/20 lần ở tốc độ thi đấu, thể lực đủ cho cả buổi chơi.',
-    subs: [
-      ['Kỹ thuật động tác', 'Thực hiện đúng kỹ thuật cốt lõi của môn.', 3, ['Quay video 5 lần thực hiện, so với mẫu chuẩn, sửa đúng 1 điểm', 'Tập chậm đúng kỹ thuật 3 × 10 lần'], 'Dán link video vận động viên giỏi để so sánh từng pha.'],
-      ['Sức bền', 'Duy trì cường độ suốt buổi.', 2, ['Tập ở vùng nhịp tim 2 (vẫn nói chuyện được) 30–40 phút', 'Interval 6 × 1 phút nhanh / 2 phút chậm'], ''],
-      ['Sức mạnh', 'Nền tảng sức mạnh, phòng chấn thương.', 2, ['3 bài cơ bản (squat, đẩy, kéo) 3 × 8–12, tăng tải dần'], ''],
-      ['Linh hoạt & phục hồi', 'Giãn cơ, ngủ đủ, tránh quá tải.', 1, ['Giãn cơ 10 phút sau buổi tập', 'Ngày nhẹ: đi bộ 30 phút + giãn cơ'], ''],
-      ['Chiến thuật', 'Đọc tình huống, ra quyết định đúng.', 2, ['Xem 1 đoạn video chuyên gia, ghi 3 quyết định và lý do', 'Tập một tình huống chiến thuật lặp lại 10 lần'], ''],
-      ['Tâm lý thi đấu', 'Bình tĩnh và tập trung khi áp lực.', 1, ['Thở hộp 4-4-4-4 trong 3 phút trước buổi tập', 'Hình dung trước 5 pha thực hiện hoàn hảo'], '']
-    ],
-    benches: [['Số lần đúng kỹ thuật trên 20 lần', 'lần', true, 'Thực hiện 20 lần ở tốc độ thật, đếm số lần đúng.'], ['Thời gian chạy 3 km', 'phút', false, 'Chạy 3 km hết sức có kiểm soát, ghi thời gian.']]
-  }
-};
-
 H.createSkillFromSpec = (spec) => {
   const skills = Store.all('skill');
   const used = new Set(skills.map(s => s.color));

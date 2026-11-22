@@ -3,5 +3,5 @@
 window.HHKN_CONFIG = {
   supabaseUrl: 'https://enwbckjozzyumpijaugu.supabase.co',
   supabaseAnonKey: 'sb_publishable_rpXpoE0dR-mbRKLsPovgZg_sy_oT3LB',
-  vapidPublicKey: 'BAfMD1-ps9GQik-UIlTgt_-E4xKlizgQnJbIh_VhPOCABDtzrf3CXndv3Zjh0ZXjaAlHiNSGM3gFpxsk4Ht62zU'
+  vapidPublicKey: 'BC-TjFeo2JvYAJN9Zrkgj8t3RstZ1whWRUIrQfOVdktKheggEONCKrrIDBoaJXTz4CwdlY0LOr4T4xJ61S9eJgg'
 };

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tạo khóa VAPID — Hùng học kỹ năng</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#F6F6F3;color:#16171A;max-width:720px;margin:0 auto;padding:24px 16px}
+h1{font-size:22px}.card{background:#fff;border:1px solid #E4E3DE;border-radius:16px;padding:16px;margin:14px 0}
+button{background:#2550C9;color:#fff;border:0;border-radius:12px;padding:12px 18px;font-weight:600;font-size:15px;cursor:pointer}
+textarea{width:100%;box-sizing:border-box;border:1px solid #D5D4CE;border-radius:10px;padding:10px;font:13px ui-monospace,monospace;min-height:70px}
+label{font-weight:600;font-size:14px;display:block;margin-bottom:6px}.muted{color:#6A6B70;font-size:13px}
+</style>
+</head>
+<body>
+<h1>Tạo khóa VAPID cho thông báo đẩy</h1>
+<p class="muted">Khóa được tạo ngay trong trình duyệt của bạn bằng Web Crypto, không gửi đi đâu. Chỉ cần tạo 1 lần.</p>
+<button id="gen">Tạo cặp khóa mới</button>
+<div class="card"><label>1. Public key → dán vào config.js (vapidPublicKey)</label><textarea id="pub" readonly></textarea></div>
+<div class="card"><label>2. Private JWK → secret VAPID_PRIVATE_JWK của Edge Function</label><textarea id="priv" readonly></textarea><p class="muted">Giữ bí mật. Không đưa vào config.js hay lên GitHub công khai.</p></div>
+<script>
+const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+document.getElementById('gen').onclick = async () => {
+  const kp = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const raw = await crypto.subtle.exportKey('raw', kp.publicKey);
+  const jwk = await crypto.subtle.exportKey('jwk', kp.privateKey);
+  document.getElementById('pub').value = b64u(raw);
+  document.getElementById('priv').value = JSON.stringify({ kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y, d: jwk.d });
+};
+</script>
+</body>
+</html>

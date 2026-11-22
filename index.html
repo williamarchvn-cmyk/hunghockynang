@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hùng học kỹ năng</title>
+<meta name="description" content="Theo dõi và học kỹ năng mới bằng luyện tập có chủ đích">
+<meta name="theme-color" content="#F6F6F3">
+<meta name="author" content="Nguyễn Mạnh Hùng">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="sidebar" aria-label="Điều hướng">
+    <div class="brand">
+      <img src="icons/icon-192.png" alt="" width="36" height="36">
+      <div><strong>Hùng học kỹ năng</strong><small>by Nguyễn Mạnh Hùng</small></div>
+    </div>
+    <nav class="side-nav" id="side-nav"></nav>
+    <div class="side-foot" id="side-foot"></div>
+  </aside>
+  <main class="main" id="view" tabindex="-1"></main>
+  <nav class="bottom-nav" id="bottom-nav" aria-label="Điều hướng"></nav>
+</div>
+<div id="sheet-root"></div>
+<div class="toast-wrap" id="toast-wrap" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="js/core.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/views.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

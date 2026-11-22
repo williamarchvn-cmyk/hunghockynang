@@ -1,0 +1,21 @@
+{
+  "name": "Hùng học kỹ năng",
+  "short_name": "Học kỹ năng",
+  "description": "Theo dõi và học kỹ năng mới bằng luyện tập có chủ đích",
+  "lang": "vi",
+  "start_url": "./#/today",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F6F6F3",
+  "theme_color": "#F6F6F3",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Bắt đầu buổi tập", "url": "./#/practice", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Ôn thẻ", "url": "./#/cards", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
